@@ -216,9 +216,9 @@
   '(member :even :odd))
 
 (defstruct tmap
-  (version "" :type string)
-  (tiled-version "" :type string)
-  (orientation :orthogonal :type torientation)
+  (version "" :type (or null string))
+  (tiled-version "" :type (or null string))
+  (orientation :orthogonal :type (or null torientation))
   (render-order nil :type (or null trender-order))
   (width 0 :type integer)
   (height 0 :type integer)

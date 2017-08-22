@@ -660,10 +660,10 @@ Only used by the staggered and hexagonal maps."
              (ret
               (make-instance
                'tiled-map
-               :version version
-               :tiled-version tiled-version
-               :orientation orientation
-               :render-order render-order
+               :version (or version "0.0")
+               :tiled-version (or tiled-version "0.0.0")
+               :orientation (or orientation :orthogonal)
+               :render-order (or render-order :right-down)
                :width width
                :height height
                :tile-width tile-width
