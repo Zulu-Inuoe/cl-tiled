@@ -255,22 +255,18 @@
    :properties (%parse-json-properties (json-child image-layer :properties) (json-child image-layer :propertytypes))
    :image (%parse-json-image (json-attr image-layer :image))))
 
-
-(defun %obj-tile-layers (obj)
-  (remove-if (lambda (layer) (string/= (json-attr layer :type) "tilelayer"))
-             (json-children obj :layers)))
-
-(defun %obj-object-groups (obj)
-  (remove-if (lambda (layer) (string/= (json-attr layer :type) "objectgroup"))
-             (json-children obj :layers)))
-
-(defun %obj-image-layers (obj)
-  (remove-if (lambda (layer) (string/= (json-attr layer :type) "imagelayer"))
-             (json-children obj :layers)))
-
-(defun %obj-group-layers (obj)
-  (remove-if (lambda (layer) (string/= (json-attr layer :type) "group"))
-             (json-children obj :layers)))
+(defun %parse-json-layers (layers)
+  (loop
+     :for layer :in layers
+     :for layer-type := (json-attr layer :type)
+     :if (string= layer-type "tilelayer")
+     :collect (%parse-json-tile-layer layer)
+     :else :if (string= layer-type "objectgroup")
+     :collect (%parse-json-object-group layer)
+     :else :if (string= layer-type "imagelayer")
+     :collect (%parse-json-image-layer layer)
+     :else :if (string= layer-type "group")
+     :collect (%parse-json-layer-group layer)))
 
 (defun %parse-json-layer-group (layer-group)
   (make-tlayer-group
@@ -282,10 +278,7 @@
    :opacity (json-attr-float layer-group :opacity 1.0)
    :visible (json-attr-bool layer-group :visible t)
    :properties (%parse-json-properties (json-child layer-group :properties) (json-child layer-group :propertytypes))
-   :tile-layers (mapcar #'%parse-json-tile-layer (%obj-tile-layers layer-group))
-   :object-groups (mapcar #'%parse-json-object-group (%obj-object-groups layer-group))
-   :image-layers (mapcar #'%parse-json-image-layer (%obj-image-layers layer-group))
-   :layer-groups (mapcar #'%parse-json-layer-group (%obj-group-layers layer-group))))
+   :layers (%parse-json-layers (json-children layer-group :layers))))
 
 (defun %parse-json-map (map)
   (make-tmap
@@ -304,10 +297,7 @@
    :next-object-id (json-attr-int map :nextobjectid)
    :properties (%parse-json-properties (json-child map :properties) (json-child map :propertytypes))
    :tilesets (mapcar #'%parse-json-tileset (json-children map :tilesets))
-   :tile-layers (mapcar #'%parse-json-tile-layer (%obj-tile-layers map))
-   :object-groups (mapcar #'%parse-json-object-group (%obj-object-groups map))
-   :image-layers (mapcar #'%parse-json-image-layer (%obj-image-layers map))
-   :layer-groups (mapcar #'%parse-json-layer-group (%obj-group-layers map))))
+   :layers (%parse-json-layers (json-children map :layers))))
 
 (defun bool-handler (str)
   (eswitch (str :test 'string=)

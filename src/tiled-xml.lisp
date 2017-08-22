@@ -308,6 +308,19 @@
    :properties (%parse-xml-properties (xml-child image-layer "properties"))
    :image (%parse-xml-image (xml-child image-layer "image"))))
 
+(defun %parse-xml-layer-group-layers (layer-group)
+  (loop
+     :for ch :in (xmls:node-children layer-group)
+     :for ch-name := (xmls:node-name ch)
+     :if (string= ch-name "layer")
+     :collect (%parse-xml-tile-layer ch)
+     :else :if (string= ch-name "objectgroup")
+     :collect (%parse-xml-object-group ch)
+     :else :if (string= ch-name "imagelayer")
+     :collect (%parse-xml-image-layer ch)
+     :else :if (string= ch-name "group")
+     :collect (%parse-xml-layer-group ch)))
+
 (defun %parse-xml-layer-group (layer-group)
   (make-tlayer-group
    :name (xml-attr layer-group "name" "")
@@ -318,10 +331,20 @@
    :opacity (xml-attr-float layer-group "opacity" 1.0)
    :visible (xml-attr-bool layer-group "visible" t)
    :properties (%parse-xml-properties (xml-child layer-group "properties"))
-   :tile-layers (mapcar #'%parse-xml-tile-layer (xml-children layer-group "layer"))
-   :object-groups (mapcar #'%parse-xml-object-group (xml-children layer-group "objectgroup"))
-   :image-layers (mapcar #'%parse-xml-image-layer (xml-children layer-group "imagelayer"))
-   :layer-groups (mapcar #'%parse-xml-layer-group (xml-children layer-group "group"))))
+   :layers (%parse-xml-layer-group-layers layer-group)))
+
+(defun %parse-xml-map-layers (map)
+  (loop
+     :for ch :in (xmls:node-children map)
+     :for ch-name := (xmls:node-name ch)
+     :if (string= ch-name "layer")
+     :collect (%parse-xml-tile-layer ch)
+     :else :if (string= ch-name "objectgroup")
+     :collect (%parse-xml-object-group ch)
+     :else :if (string= ch-name "imagelayer")
+     :collect (%parse-xml-image-layer ch)
+     :else :if (string= ch-name "group")
+     :collect (%parse-xml-layer-group ch)))
 
 (defun %parse-xml-map (map)
   (make-tmap
@@ -340,10 +363,7 @@
    :next-object-id (xml-attr-int map "nextobjectid")
    :properties (%parse-xml-properties (xml-child map "properties"))
    :tilesets (mapcar #'%parse-xml-tileset (xml-children map "tileset"))
-   :tile-layers (mapcar #'%parse-xml-tile-layer (xml-children map "layer"))
-   :object-groups (mapcar #'%parse-xml-object-group (xml-children map "objectgroup"))
-   :image-layers (mapcar #'%parse-xml-image-layer (xml-children map "imagelayer"))
-   :layer-groups (mapcar #'%parse-xml-layer-group (xml-children map "group"))))
+   :layers (%parse-xml-map-layers map)))
 
 (defun %slurp-file (path)
   (with-output-to-string (str)

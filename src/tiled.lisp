@@ -652,8 +652,7 @@ Only used by the staggered and hexagonal maps."
   (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
     (with-slots (version tiled-version orientation render-order
                          width height tile-width tile-height background-color
-                         tilesets tile-layers object-groups image-layers layer-groups
-                         properties)
+                         tilesets layers properties)
         tmap
       (let* ((loaded-tilesets
               (mapcar #'%load-tileset tilesets))
@@ -672,11 +671,14 @@ Only used by the staggered and hexagonal maps."
                :tilesets loaded-tilesets
                :properties properties))
              (loaded-layers
-              (nconc
-               (mapcar (lambda (l) (%load-tile-layer l ret nil)) tile-layers)
-               (mapcar (lambda (l) (%load-object-layer l ret nil)) object-groups)
-               (mapcar (lambda (l) (%load-image-layer l ret nil)) image-layers)
-               (mapcar (lambda (l) (%load-layer-group l ret nil)) layer-groups))))
+              (mapcar
+               (lambda (l)
+                 (etypecase l
+                   (ttile-layer (%load-tile-layer l ret nil))
+                   (tobject-group (%load-object-layer l ret nil))
+                   (timage-layer (%load-image-layer l ret nil))
+                   (tlayer-group (%load-layer-group l ret nil))))
+               layers)))
         (setf (slot-value ret 'layers) loaded-layers)
         ret))))
 
@@ -907,8 +909,7 @@ Only used by the staggered and hexagonal maps."
 
 (defun %load-layer-group (tlayer map parent)
   (with-slots (name offset-x offset-y opacity visible
-                    tile-layers object-groups image-layers layer-groups
-                    properties)
+                    layers properties)
       tlayer
     (let ((ret
            (make-instance
@@ -922,11 +923,14 @@ Only used by the staggered and hexagonal maps."
             :offset-y offset-y
             :properties properties)))
       (setf (slot-value ret 'layers)
-            (nconc
-             (mapcar (lambda (l) (%load-tile-layer l map ret)) tile-layers)
-             (mapcar (lambda (l) (%load-object-layer l map ret)) object-groups)
-             (mapcar (lambda (l) (%load-image-layer l map ret)) image-layers)
-             (mapcar (lambda (l) (%load-layer-group l map ret)) layer-groups)))
+            (mapcar
+             (lambda (l)
+               (etypecase l
+                 (ttile-layer (%load-tile-layer l map ret))
+                 (tobject-group (%load-object-layer l map ret))
+                 (timage-layer (%load-image-layer l map ret))
+                 (tlayer-group (%load-layer-group l map ret))))
+             layers))
       ret)))
 
 (defun %load-tileset (ttileset)
@@ -1001,11 +1005,13 @@ Only used by the staggered and hexagonal maps."
         tileset)))
 
 (defun %load-image (timage)
-  (with-slots (source transparent-color format image-data)
-      timage
-    (if source
-        (%load-external-image source transparent-color)
-        (%load-embedded-image format image-data transparent-color))))
+  (if timage
+      (with-slots (source transparent-color format image-data)
+          timage
+        (if source
+            (%load-external-image source transparent-color)
+            (%load-embedded-image format image-data transparent-color)))
+      nil))
 
 (defun %load-tiles (ttiles)
   (mapcar

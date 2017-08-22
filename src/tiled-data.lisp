@@ -198,10 +198,7 @@
   (opacity 1.0 :type real)
   (visible t :type boolean)
   (properties () :type list)
-  (tile-layers () :type list)
-  (object-groups () :type list)
-  (image-layers () :type list)
-  (layer-groups () :type list))
+  (layers () :type list))
 
 (deftype torientation ()
   '(member :orthogonal :isonometric :staggered :hexagonal))
@@ -231,10 +228,7 @@
   (next-object-id 0 :type integer)
   (properties () :type list)
   (tilesets () :type list)
-  (tile-layers () :type list)
-  (object-groups () :type list)
-  (image-layers () :type list)
-  (layer-groups () :type list))
+  (layers () :type list))
 
 (defun parse-color-string (color-str &optional (default nil))
   (cond
