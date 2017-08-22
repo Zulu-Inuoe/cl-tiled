@@ -1006,11 +1006,22 @@ Only used by the staggered and hexagonal maps."
 
 (defun %load-image (timage)
   (if timage
-      (with-slots (source transparent-color format image-data)
+      (with-slots (source width height transparent-color format image-data)
           timage
         (if source
-            (%load-external-image source transparent-color)
-            (%load-embedded-image format image-data transparent-color)))
+            (make-instance
+             'external-tiled-image
+             :source (uiop:merge-pathnames* source)
+             :transparent-color (or transparent-color +transparent+)
+             :width (or width 0)
+             :height (or height 0))
+            (make-instance
+             'embedded-tiled-image
+             :format format
+             :data image-data
+             :transparent-color (or transparent-color +transparent+)
+             :width (or width 0)
+             :height (or height 0))))
       nil))
 
 (defun %load-tiles (ttiles)
@@ -1077,25 +1088,3 @@ Only used by the staggered and hexagonal maps."
                    :duration duration
                    :tile (find tile-id tiles :key #'tile-id))))
               (ttileset-tile-frames ttile))))))
-
-(defun %load-external-image (path transparent-color)
-  (opticl:with-image-bounds (width height)
-      (opticl:read-image-file path)
-    (make-instance
-     'external-tiled-image
-     :source (uiop:ensure-absolute-pathname path *default-pathname-defaults*)
-     :transparent-color (or transparent-color +transparent+)
-     :width width
-     :height height)))
-
-(defun %load-embedded-image (format data transparent-color)
-  (flexi-streams:with-input-from-sequence (stream data)
-    (opticl:with-image-bounds (width height)
-        (opticl:read-image-stream stream  format)
-      (make-instance
-       'embedded-tiled-image
-       :format format
-       :data data
-       :transparent-color (or transparent-color +transparent+)
-       :width width
-       :height height))))

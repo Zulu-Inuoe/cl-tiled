@@ -37,9 +37,7 @@ Please post any requests/bugs on the issues page.
 * [chipz](https://github.com/froydnj/chipz) - decompressing tileset and image data
 * [cl-base64](http://quickdocs.org/cl-base64/api) - Decode base64 binary data in XML text
 * [cl-json](https://github.com/hankhero/cl-json) - JSON parser
-* [flexi-streams](https://github.com/edicl/flexi-streams) - embedded image loading
 * [nibbles](https://github.com/froydnj/nibbles) - Decode encoded/compressed tile data
-* [opticl](https://github.com/slyrus/opticl) - Read embedded/external image data
 * [parse-float](https://github.com/soemraws/parse-float) - parsing floats (xml data)
 * [split-sequence](http://cliki.net/split-sequence) - split sequences (CSV type XML data)
 * [uiop](https://github.com/fare/asdf/tree/master/uiop) - pathname handling

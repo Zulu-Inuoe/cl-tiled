@@ -36,9 +36,7 @@
    #:chipz
    #:cl-base64
    #:cl-json
-   #:flexi-streams
    #:nibbles
-   #:opticl
    #:parse-float
    #:split-sequence
    #:uiop
