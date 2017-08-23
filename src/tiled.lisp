@@ -156,10 +156,34 @@ If nil, indicates no terrain at that corner."
 The `tile' here refers to the image to be displayed on this particular frame."))
 
 (defun tile-column (tile)
-  (mod (tile-id tile) (tileset-tile-count (tile-tileset tile))))
+  (mod (tile-id tile) (tileset-columns (tile-tileset tile))))
 
 (defun tile-row (tile)
-  (values (truncate (tile-id tile) (tileset-tile-count (tile-tileset tile)))))
+  (values (truncate (tile-id tile) (tileset-columns (tile-tileset tile)))))
+
+(defun tile-pixel-x (tile
+                          &aux
+                            (column (tile-column tile))
+                            (tileset (tile-tileset tile)))
+  (+ (* column (tileset-tile-width tileset))
+     (* column (tileset-spacing tileset))
+     (tileset-offset-x tileset)
+     (tileset-margin tileset)))
+
+(defun tile-pixel-y (tile
+                       &aux
+                         (row (tile-row tile))
+                         (tileset (tile-tileset tile)))
+  (+ (* row (tileset-tile-height tileset))
+     (* row (tileset-spacing tileset))
+     (tileset-offset-y tileset)
+     (tileset-margin tileset)))
+
+(defun tile-width (tile)
+  (tileset-tile-width (tile-tileset tile)))
+
+(defun tile-height (tile)
+  (tileset-tile-height (tile-tileset tile)))
 
 (defun tile-image (tile)
   (tileset-image (tile-tileset tile)))
@@ -640,6 +664,14 @@ Only used by the staggered and hexagonal maps."
   (loop :for layer :in (map-layers map)
      :if (typep layer 'image-layer)
      :collect layer))
+
+(defun map-width-pixels (map)
+  (* (map-tile-width map)
+     (map-width map)))
+
+(defun map-height-pixels (map)
+  (* (map-tile-height map)
+     (map-height map)))
 
 (defun load-map (path
                  &aux

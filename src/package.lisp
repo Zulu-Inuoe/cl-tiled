@@ -60,6 +60,11 @@
    #:tile-id
    #:tile-column
    #:tile-row
+   #:tile-pixel-x
+   #:tile-pixel-y
+   #:tile-width
+   #:tile-height
+
    #:tile-image
 
    #:tiled-tileset-tile
@@ -200,6 +205,9 @@
    #:map-background-color
    #:map-tilesets
    #:map-layers
+
+   #:map-width-pixels
+   #:map-height-pixels
 
    #:map-tile-layers
    #:map-object-layers
