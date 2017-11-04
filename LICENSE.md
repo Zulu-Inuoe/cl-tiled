@@ -1,4 +1,4 @@
-Copyright (c) 2017 Wilfredo Vel·zquez-RodrÌguez
+Copyright (c) 2017 Wilfredo Vel√°zquez-Rodr√≠guez
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
