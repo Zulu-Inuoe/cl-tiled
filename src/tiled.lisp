@@ -882,6 +882,7 @@ Only used by the staggered and hexagonal maps."
         :x x
         :y y
         :rotation (or rotation 0)
+        :properties properties
         :visible visible))
       (image
        (make-instance
