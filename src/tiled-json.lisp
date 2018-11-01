@@ -174,7 +174,7 @@
        :offset-y (json-attr-int object-group :offsety 0)
        :draw-order (parse-draw-order (json-attr object-group :draworder))
        :properties (%parse-json-properties (json-child object-group :properties) (json-child object-group :propertytypes))
-       :objects (mapcar #'%parse-json-object (json-children object-group :object)))
+       :objects (mapcar #'%parse-json-object (json-children object-group :objects)))
       nil))
 
 (defun %parse-json-frame (frame)
