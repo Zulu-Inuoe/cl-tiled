@@ -64,7 +64,10 @@
   (make-tproperty
    :name (xml-attr property "name" "")
    :type (xml-attr property "type" "")
-   :value (xml-attr property "value" "")))
+   ;;Value might be stored in the 'value' property or in the string content
+   :value (or (xmls:xmlrep-attrib-value "value" property nil)
+              (xmls:xmlrep-string-child property nil)
+              "")))
 
 (defun %parse-xml-properties (properties)
   (if properties
