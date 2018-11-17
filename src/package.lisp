@@ -120,6 +120,9 @@
    #:cell
    #:cell-layer
    #:cell-tile
+   #:cell-flipped-anti-diagonal
+   #:cell-flipped-horizontal
+   #:cell-flipped-vertical
    #:cell-column
    #:cell-row
    #:cell-x
