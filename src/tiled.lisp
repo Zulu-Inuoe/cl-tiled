@@ -205,7 +205,7 @@ The `tile' here refers to the image to be displayed on this particular frame."))
     :reader terrain-name)
    (tile
     :documentation "The tile this terrain type refers to"
-    :type tiled-tile
+    :type (or null tiled-tile)
     :initarg :tile
     :reader terrain-tile)))
 
