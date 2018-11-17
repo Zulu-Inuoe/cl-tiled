@@ -578,7 +578,7 @@ These coordinates are relative to the x and y of the object"
 
 (deftype orientation ()
   "Orientation of the map"
-  '(member :orthogonal :isonometric :staggered :hexagonal))
+  '(member :orthogonal :isometric :staggered :hexagonal))
 
 (deftype render-order ()
   '(member :right-down :right-up :left-down :left-up))
