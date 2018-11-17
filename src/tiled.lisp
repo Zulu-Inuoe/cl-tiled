@@ -1058,24 +1058,51 @@ Only used by the staggered and hexagonal maps."
       nil))
 
 (defun %load-tiles (ttiles)
-  (mapcar
-   (lambda (tile)
-     (with-slots (id type probability frames properties)
-         tile
-       (if frames
-           (make-instance
-            'animated-tile
-            :id id
-            :type type
-            :probability probability
-            :properties properties)
-           (make-instance
-            'tiled-tileset-tile
-            :id id
-            :type type
-            :probability probability
-            :properties properties))))
-   ttiles))
+  ;; It can happen that the tiles other than the first frame for an animated
+  ;; tile may not be in ttiles. In this case, default blank tiles will be
+  ;; collected and added at the end for them. The same must be done with ttiles.
+  (let ((other-frame-tiles nil)
+        (other-frame-tids nil)
+        (other-frame-ttiles nil))
+    (nconc
+     (mapcar
+      (lambda (tile)
+        (with-slots (id type probability frames properties)
+            tile
+            (if frames
+              (progn
+               ;; Go through the other tiles and add them if they are not
+               ;; found.
+               (dolist (tframe (ttileset-tile-frames tile))
+                 (with-slots (duration tile-id)
+                   tframe
+                   (let ((tl1 (find tile-id ttiles
+                                    :key #'(lambda (til) (slot-value til 'id))))
+                         (tl2 (find tile-id other-frame-tids)))
+                     (unless (or tl1 tl2)
+                       (push (make-instance 'tiled-tileset-tile
+                                            :id tile-id
+                                            :type ""
+                                            :probability nil)
+                             other-frame-tiles)
+                       (push tile-id other-frame-tids)
+                       (push (make-ttileset-tile :id tile-id)
+                             other-frame-ttiles)))))
+               (make-instance
+                'animated-tile
+                :id id
+                :type type
+                :probability probability
+                :properties properties))
+              (make-instance
+               'tiled-tileset-tile
+               :id id
+               :type type
+               :probability probability
+               :properties properties))))
+      ttiles)
+     (progn (nconc ttiles other-frame-ttiles)
+            other-frame-tiles))))
 
 (defun %load-terrains (tterrains tiles)
   (mapcar
