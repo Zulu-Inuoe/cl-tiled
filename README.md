@@ -24,7 +24,7 @@ Current:
 
 Planned:
 
-* Defining API for isonometric, staggred, and hexagonal maps
+* Defining API for isometric, staggred, and hexagonal maps
 * Make the library more efficient
 * Modifying map and writing TMX/TSX and JSON files (if enough demand for this)
 

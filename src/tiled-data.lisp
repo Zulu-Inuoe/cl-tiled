@@ -201,7 +201,7 @@
   (layers () :type list))
 
 (deftype torientation ()
-  '(member :orthogonal :isonometric :staggered :hexagonal))
+  '(member :orthogonal :isometric :staggered :hexagonal))
 
 (deftype trender-order ()
   '(member :right-down :right-up :left-down :left-up))
@@ -301,7 +301,7 @@
   (eswitch (orientation :test 'equalp)
     (nil nil)
     ("orthogonal" :orthogonal)
-    ("isonometric" :isonometric)
+    ("isometric" :isometric)
     ("staggered" :staggered)
     ("hexagonal" :hexagonal)))
 
