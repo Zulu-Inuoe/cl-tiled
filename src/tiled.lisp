@@ -806,7 +806,7 @@ Only used by the staggered and hexagonal maps."
         :type type
         :x x
         :y y
-        :rotation (or rotation 0)
+        :rotation (or rotation 0.0)
         :visible visible
         :rx width
         :ry height
@@ -821,7 +821,7 @@ Only used by the staggered and hexagonal maps."
           :type type
           :x x
           :y y
-          :rotation (or rotation 0)
+          :rotation (or rotation 0.0)
           :visible visible
           :vertices
           (mapcar
@@ -839,7 +839,7 @@ Only used by the staggered and hexagonal maps."
           :type type
           :x x
           :y y
-          :rotation (or rotation 0)
+          :rotation (or rotation 0.0)
           :visible visible
           :points (mapcar
                    (lambda (tpoint)
@@ -858,7 +858,7 @@ Only used by the staggered and hexagonal maps."
           :type type
           :x x
           :y y
-          :rotation (or rotation 0)
+          :rotation (or rotation 0.0)
           :visible visible
           :string (or text "")
           :font-family (or font-family "sans-serif")
@@ -881,7 +881,7 @@ Only used by the staggered and hexagonal maps."
         :type type
         :x x
         :y y
-        :rotation (or rotation 0)
+        :rotation (or rotation 0.0)
         :properties properties
         :visible visible))
       (image
@@ -892,7 +892,7 @@ Only used by the staggered and hexagonal maps."
         :type type
         :x x
         :y y
-        :rotation (or rotation 0)
+        :rotation (or rotation 0.0)
         :visible visible
         :image (%load-image image)
         :properties properties))
@@ -904,7 +904,7 @@ Only used by the staggered and hexagonal maps."
         :type type
         :x x
         :y y
-        :rotation (or rotation 0)
+        :rotation (or rotation 0.0)
         :visible visible
         :width width
         :height height
