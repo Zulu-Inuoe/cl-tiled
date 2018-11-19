@@ -360,6 +360,21 @@ The `tile' here refers to the image to be displayed on this particular frame."))
     :type tiled-tile
     :initarg :tile
     :reader cell-tile)
+   (flipped-anti-diagonal
+    :documentation "The tile is flipped anti-diagonally"
+    :type boolean
+    :initarg :flipped-anti-diagonal
+    :reader cell-flipped-anti-diagonal)
+   (flipped-horizontal
+    :documentation "The tile is flipped horizontally"
+    :type boolean
+    :initarg :flipped-horizontal
+    :reader cell-flipped-horizontal)
+   (flipped-vertical
+    :documentation "The tile is flipped vertically"
+    :type boolean
+    :initarg :flipped-vertical
+    :reader cell-flipped-vertical)
    (column
     :documentation "The column to draw this cell to, relative to its containing layer"
     :type integer
@@ -756,7 +771,7 @@ Only used by the staggered and hexagonal maps."
             (loop
                :for i :from 0
                :for tgid :in (ttile-data-tiles tile-data)
-               :for tile := (%find-tile tgid tilesets)
+               :for tile := (%find-tile (mask-field (byte 29 0) tgid) tilesets)
                :when tile
                :collect
                (multiple-value-bind (row col)
@@ -766,6 +781,9 @@ Only used by the staggered and hexagonal maps."
                   :row row
                   :column col
                   :tile tile
+                  :flipped-anti-diagonal (logbitp 29 tgid)
+                  :flipped-vertical (logbitp 30 tgid)
+                  :flipped-horizontal (logbitp 31 tgid)
                   :layer ret))))
       ret)))
 
