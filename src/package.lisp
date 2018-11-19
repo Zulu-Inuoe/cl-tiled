@@ -38,6 +38,7 @@
    #:tiled-color-a
 
    #:properties-mixin
+   #:properties
 
    #:tiled-image
    #:image-transparent-color
