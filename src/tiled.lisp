@@ -781,9 +781,9 @@ Only used by the staggered and hexagonal maps."
                   :row row
                   :column col
                   :tile tile
-                  :flipped-anti-diagonal (ldb-test (byte 1 29) tgid)
-                  :flipped-vertical (ldb-test (byte 1 30) tgid)
-                  :flipped-horizontal (ldb-test (byte 1 31) tgid)
+                  :flipped-anti-diagonal (logbitp 29 tgid)
+                  :flipped-vertical (logbitp 30 tgid)
+                  :flipped-horizontal (logbitp 31 tgid)
                   :layer ret))))
       ret)))
 
