@@ -376,7 +376,7 @@ The `tile' here refers to the image to be displayed on this particular frame."))
      (layer-tile-width (cell-layer cell))))
 
 (defun cell-y (cell)
-  (* (cell-row cell)
+  (* (1+ (cell-row cell))
      (layer-tile-height (cell-layer cell))))
 
 (defun cell-full-offsets (cell)
