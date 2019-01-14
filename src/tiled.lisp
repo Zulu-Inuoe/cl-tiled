@@ -129,7 +129,7 @@ If nil, indicates no terrain at that corner."
     :reader tile-terrains)
    (probability
     :documentation "'A percentage indicating the probability that this tile is chosen when it competes with others while editing with the terrain tool.'"
-    :type real
+    :type (or null real)
     :initarg :probability
     :reader tile-probability)
    (object-group
