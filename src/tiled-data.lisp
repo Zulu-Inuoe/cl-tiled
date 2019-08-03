@@ -127,19 +127,20 @@
 
    #:draw-order
 
+   #:tlayer
+   #:tlayer-name
+   #:tlayer-x
+   #:tlayer-y
+   #:tlayer-width
+   #:tlayer-height
+   #:tlayer-opacity
+   #:tlayer-visible
+   #:tlayer-offset-x
+   #:tlayer-offset-y
+   #:tlayer-properties
+
    #:tobject-group
-   #:tobject-group-name
-   #:tobject-group-color
-   #:tobject-group-x
-   #:tobject-group-y
-   #:tobject-group-width
-   #:tobject-group-height
-   #:tobject-group-opacity
-   #:tobject-group-visible
-   #:tobject-group-offset-x
-   #:tobject-group-offset-y
    #:tobject-group-draw-order
-   #:tobject-group-properties
    #:tobject-group-objects
    #:make-tobject-group
 
@@ -187,40 +188,14 @@
    #:make-ttile-data
 
    #:ttile-layer
-   #:ttile-layer-name
-   #:ttile-layer-x
-   #:ttile-layer-y
-   #:ttile-layer-width
-   #:ttile-layer-height
-   #:ttile-layer-opacity
-   #:ttile-layer-visible
-   #:ttile-layer-offset-x
-   #:ttile-layer-offset-y
-   #:ttile-layer-properties
    #:ttile-layer-tile-data
    #:make-ttile-layer
 
    #:timage-layer
-   #:timage-layer-name
-   #:timage-layer-offset-x
-   #:timage-layer-offset-y
-   #:timage-layer-x
-   #:timage-layer-y
-   #:timage-layer-opacity
-   #:timage-layer-visible
-   #:timage-layer-properties
    #:timage-layer-image
    #:make-timage-layer
 
    #:tlayer-group
-   #:tlayer-group-name
-   #:tlayer-group-offset-x
-   #:tlayer-group-offset-y
-   #:tlayer-group-x
-   #:tlayer-group-y
-   #:tlayer-group-opacity
-   #:tlayer-group-visible
-   #:tlayer-group-properties
    #:tlayer-group-layers
    #:make-tlayer-group
 
@@ -456,9 +431,8 @@
   index - manual stacking, meaning drawn in defined order"
   '(member :top-down :index))
 
-(defstruct tobject-group
+(defstruct tlayer
   (name "" :type string)
-  (color nil :type (or null tiled-color))
   (x nil :type (or null integer))
   (y nil :type (or null integer))
   (width nil :type (or null integer))
@@ -467,8 +441,11 @@
   (visible t :type boolean)
   (offset-x 0 :type integer)
   (offset-y 0 :type integer)
+  (properties () :type list))
+
+(defstruct (tobject-group (:include tlayer))
+  (color nil :type (or null tiled-color))
   (draw-order nil :type (or null draw-order))
-  (properties () :type list)
   (objects () :type list))
 
 (defstruct tframe
@@ -510,39 +487,13 @@
   (compression nil :type tcompression)
   (tiles () :type list))
 
-(defstruct ttile-layer
-  (name "" :type string)
-  (x nil :type (or null integer))
-  (y nil :type (or null integer))
-  (width 0 :type integer)
-  (height 0 :type integer)
-  (opacity 1.0 :type real)
-  (visible t :type boolean)
-  (offset-x 0 :type integer)
-  (offset-y 0 :type integer)
-  (properties () :type list)
+(defstruct (ttile-layer (:include tlayer))
   (tile-data nil :type ttile-data))
 
-(defstruct timage-layer
-  (name "" :type string)
-  (offset-x 0 :type integer)
-  (offset-y 0 :type integer)
-  (x nil :type (or null integer))
-  (y nil :type (or null integer))
-  (opacity 1.0 :type real)
-  (visible t :type boolean)
-  (properties () :type list)
+(defstruct (timage-layer (:include tlayer))
   (image nil :type (or null tiled-image)))
 
-(defstruct tlayer-group
-  (name "" :type string)
-  (offset-x 0 :type integer)
-  (offset-y 0 :type integer)
-  (x nil :type (or null integer))
-  (y nil :type (or null integer))
-  (opacity 1.0 :type real)
-  (visible t :type boolean)
-  (properties () :type list)
+(defstruct (tlayer-group (:include tlayer))
   (layers () :type list))
 
 (deftype orientation ()

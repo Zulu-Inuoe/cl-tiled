@@ -670,12 +670,12 @@ These coordinates are relative to the x and y of the object"
               'tile-layer
               :map map
               :parent parent
-              :name (ttile-layer-name tlayer)
-              :opacity (ttile-layer-opacity tlayer)
-              :visible (ttile-layer-visible tlayer)
-              :offset-x (ttile-layer-offset-x tlayer)
-              :offset-y (ttile-layer-offset-y tlayer)
-              :properties (ttile-layer-properties tlayer))))
+              :name (tlayer-name tlayer)
+              :opacity (tlayer-opacity tlayer)
+              :visible (tlayer-visible tlayer)
+              :offset-x (tlayer-offset-x tlayer)
+              :offset-y (tlayer-offset-y tlayer)
+              :properties (tlayer-properties tlayer))))
     (setf (slot-value ret 'cells)
           (loop
             :for i :from 0
@@ -684,7 +684,7 @@ These coordinates are relative to the x and y of the object"
             :when tile
               :collect
               (multiple-value-bind (row col)
-                  (truncate i (ttile-layer-width tlayer))
+                  (truncate i (tlayer-width tlayer))
                 (make-instance
                  'cell
                  :row row
@@ -703,14 +703,14 @@ These coordinates are relative to the x and y of the object"
            'object-layer
            :map map
            :parent parent
-           :name (tobject-group-name tgroup)
-           :opacity (tobject-group-opacity tgroup)
-           :visible (tobject-group-visible tgroup)
-           :offset-x (tobject-group-offset-x tgroup)
-           :offset-y (tobject-group-offset-y tgroup)
+           :name (tlayer-name tgroup)
+           :opacity (tlayer-opacity tgroup)
+           :visible (tlayer-visible tgroup)
+           :offset-x (tlayer-offset-x tgroup)
+           :offset-y (tlayer-offset-y tgroup)
            :draw-order (or (tobject-group-draw-order tgroup) :top-down)
            :objects (%load-objects (tobject-group-objects tgroup))
-           :properties (tobject-group-properties tgroup))))
+           :properties (tlayer-properties tgroup))))
     (%finalize-object-layer ret (tobject-group-objects tgroup) tilesets)
     ret))
 
@@ -849,13 +849,13 @@ These coordinates are relative to the x and y of the object"
    'image-layer
    :map map
    :parent parent
-   :name (timage-layer-name tlayer)
-   :opacity (timage-layer-opacity tlayer)
-   :visible (timage-layer-visible tlayer)
-   :offset-x (timage-layer-offset-x tlayer)
-   :offset-y (timage-layer-offset-y tlayer)
+   :name (tlayer-name tlayer)
+   :opacity (tlayer-opacity tlayer)
+   :visible (tlayer-visible tlayer)
+   :offset-x (tlayer-offset-x tlayer)
+   :offset-y (tlayer-offset-y tlayer)
    :image (timage-layer-image tlayer)
-   :properties (timage-layer-properties tlayer)))
+   :properties (tlayer-properties tlayer)))
 
 (defun %load-layer-group (tlayer map parent)
   (let ((ret
@@ -863,12 +863,12 @@ These coordinates are relative to the x and y of the object"
            'group-layer
            :map map
            :parent parent
-           :name (tlayer-group-name tlayer)
-           :opacity (tlayer-group-opacity tlayer)
-           :visible (tlayer-group-visible tlayer)
-           :offset-x (tlayer-group-offset-x tlayer)
-           :offset-y (tlayer-group-offset-y tlayer)
-           :properties (tlayer-group-properties tlayer))))
+           :name (tlayer-name tlayer)
+           :opacity (tlayer-opacity tlayer)
+           :visible (tlayer-visible tlayer)
+           :offset-x (tlayer-offset-x tlayer)
+           :offset-y (tlayer-offset-y tlayer)
+           :properties (tlayer-properties tlayer))))
     (setf (slot-value ret 'layers)
           (mapcar
            (lambda (l)

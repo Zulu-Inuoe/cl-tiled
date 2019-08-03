@@ -151,22 +151,21 @@
    :image (%parse-json-image (json-attr object :image))))
 
 (defun %parse-json-object-group (object-group)
-  (if object-group
-      (make-tobject-group
-       :name (json-attr object-group :name "")
-       :color (json-attr-color object-group :color)
-       :x (json-attr-int object-group :x)
-       :y (json-attr-int object-group :y)
-       :width (json-attr-int object-group :width)
-       :height (json-attr-int object-group :height)
-       :opacity (json-attr-float object-group :opacity 1.0)
-       :visible (json-attr-bool object-group :visible t)
-       :offset-x (json-attr-int object-group :offsetx 0)
-       :offset-y (json-attr-int object-group :offsety 0)
-       :draw-order (parse-draw-order (json-attr object-group :draworder))
-       :properties (%parse-json-properties (json-child object-group :properties) (json-child object-group :propertytypes))
-       :objects (mapcar #'%parse-json-object (json-children object-group :objects)))
-      nil))
+  (when object-group
+    (make-tobject-group
+     :name (json-attr object-group :name "")
+     :color (json-attr-color object-group :color)
+     :x (json-attr-int object-group :x)
+     :y (json-attr-int object-group :y)
+     :width (json-attr-int object-group :width)
+     :height (json-attr-int object-group :height)
+     :opacity (json-attr-float object-group :opacity 1.0)
+     :visible (json-attr-bool object-group :visible t)
+     :offset-x (json-attr-int object-group :offsetx 0)
+     :offset-y (json-attr-int object-group :offsety 0)
+     :properties (%parse-json-properties (json-child object-group :properties) (json-child object-group :propertytypes))
+     :draw-order (parse-draw-order (json-attr object-group :draworder))
+     :objects (mapcar #'%parse-json-object (json-children object-group :objects)))))
 
 (defun %parse-json-frame (frame)
   (make-tframe
@@ -237,12 +236,14 @@
 (defun %parse-json-image-layer (image-layer)
   (make-timage-layer
    :name (json-attr image-layer :name "")
-   :offset-x (json-attr-int image-layer :offsetx 0)
-   :offset-y (json-attr-int image-layer :offsety 0)
    :x (json-attr-int image-layer :x)
    :y (json-attr-int image-layer :y)
+   :width (json-attr-int image-layer :width)
+   :height (json-attr-int image-layer :height)
    :opacity (json-attr-float image-layer :opacity 1.0)
    :visible (json-attr-bool image-layer :visible t)
+   :offset-x (json-attr-int image-layer :offsetx 0)
+   :offset-y (json-attr-int image-layer :offsety 0)
    :properties (%parse-json-properties (json-child image-layer :properties) (json-child image-layer :propertytypes))
    :image (%parse-json-image (json-attr image-layer :image))))
 
@@ -262,12 +263,14 @@
 (defun %parse-json-layer-group (layer-group)
   (make-tlayer-group
    :name (json-attr layer-group :name "")
-   :offset-x (json-attr-int layer-group :offsetx 0)
-   :offset-y (json-attr-int layer-group :offsety 0)
    :x (json-attr-int layer-group :x)
    :y (json-attr-int layer-group :y)
+   :width (json-attr-int layer-group :width)
+   :height (json-attr-int layer-group :height)
    :opacity (json-attr-float layer-group :opacity 1.0)
    :visible (json-attr-bool layer-group :visible t)
+   :offset-x (json-attr-int layer-group :offsetx 0)
+   :offset-y (json-attr-int layer-group :offsety 0)
    :properties (%parse-json-properties (json-child layer-group :properties) (json-child layer-group :propertytypes))
    :layers (%parse-json-layers (json-children layer-group :layers))))
 
