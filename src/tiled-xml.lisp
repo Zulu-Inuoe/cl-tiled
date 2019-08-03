@@ -120,11 +120,6 @@
               (xml-children terrain-types "terrain"))
       (list)))
 
-(defun %parse-xml-ellipse (ellipse)
-  (if ellipse
-      (make-tellipse)
-      nil))
-
 (defun %parse-xml-point (point)
   (cons
    (xml-attr-int point "x" 0)
@@ -186,7 +181,7 @@
    :gid (xml-attr-int object "gid")
    :visible (xml-attr-bool object "visible" t)
    :properties (%parse-xml-properties (xml-child object "properties"))
-   :ellipse (%parse-xml-ellipse (xml-child object "ellipse"))
+   :ellipse (and (xml-child object "ellipse") t)
    :polygon (%parse-xml-polygon (xml-child object "polygon"))
    :polyline (%parse-xml-polyline (xml-child object "polyline"))
    :text (%parse-xml-text (xml-child object "text"))

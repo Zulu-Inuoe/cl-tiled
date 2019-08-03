@@ -99,11 +99,6 @@
    :tile (json-attr-int terrain :tile)
    :properties (%parse-json-properties (json-child terrain :properties) (json-child terrain :propertytypes))))
 
-(defun %parse-json-ellipse (ellipse)
-  (if ellipse
-      (make-tellipse)
-      nil))
-
 (defun %parse-json-point (point)
   (cons
    (json-attr-int point :x 0)
@@ -153,7 +148,7 @@
    :gid (json-attr-int object :gid)
    :visible (json-attr-bool object :visible t)
    :properties (%parse-json-properties (json-child object :properties) (json-child object :propertytypes))
-   :ellipse (%parse-json-ellipse (json-attr-bool object :ellipse))
+   :ellipse (json-attr-bool object :ellipse)
    :polygon (%parse-json-polygon (json-children object :polygon))
    :polyline (%parse-json-polyline (json-children object :polyline))
    :text (%parse-json-text (json-child object :text))

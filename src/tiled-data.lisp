@@ -66,9 +66,6 @@
    #:tterrain-properties
    #:make-tterrain
 
-   #:tellipse
-   #:make-tellipse
-
    #:tpolygon
    #:tpolygon-points
    #:make-tpolygon
@@ -358,8 +355,6 @@
   (tile 0 :type integer)
   (properties () :type list))
 
-(defstruct tellipse)
-
 (defstruct tpolygon
   (points () :type list))
 
@@ -400,7 +395,7 @@
   (gid nil :type (or null integer))
   (visible t :type boolean)
   (properties () :type list)
-  (ellipse nil :type (or null tellipse))
+  (ellipse nil :type boolean)
   (polygon nil :type (or null tpolygon))
   (polyline nil :type (or null tpolyline))
   (text nil :type (or null ttext))
