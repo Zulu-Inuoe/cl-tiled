@@ -138,8 +138,8 @@
                   (destructuring-bind (x y)
                       (split-sequence:split-sequence #\, pair)
                     (cons
-                     (parse-float:parse-float x :junk-allowed t)
-                     (parse-float:parse-float y :junk-allowed t))))
+                     (parse-integer x :junk-allowed t)
+                     (parse-integer y :junk-allowed t))))
                 (split-sequence:split-sequence #\SPACE (xml-attr polygon "points"))))
       nil))
 
@@ -151,8 +151,8 @@
                   (destructuring-bind (x y)
                       (split-sequence:split-sequence #\, pair)
                     (cons
-                     (parse-float:parse-float x :junk-allowed t)
-                     (parse-float:parse-float y :junk-allowed t))))
+                     (parse-integer x :junk-allowed t)
+                     (parse-integer y :junk-allowed t))))
                 (split-sequence:split-sequence #\SPACE (xml-attr polyline "points"))))
       nil))
 
