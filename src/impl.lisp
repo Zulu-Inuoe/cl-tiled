@@ -21,57 +21,20 @@
 (defpackage #:cl-tiled.impl
   (:use
    #:alexandria
-   #:cl)
+   #:cl
+   #:cl-tiled.data-types)
   (:export
-   #:tiled-color
-   #:tiled-color-a
-   #:tiled-color-r
-   #:tiled-color-g
-   #:tiled-color-b
-   #:make-tiled-color
    #:+transparent+
    #:+black+
-
-   #:property-type
-   #:property-name
-   #:property-value
-   #:property-value-string
-
-   #:string-property
-   #:int-property
-   #:float-property
-   #:bool-property
-   #:color-property
-   #:file-property
 
    #:timage-encoding
    #:tcompression
 
    #:timage-data
-   #:encoding
-   #:compression
-   #:data
+   #:timage-data-encoding
+   #:timage-data-compression
+   #:timage-data-data
    #:make-timage-data
-
-   #:tiled-image
-   #:transparent-color
-   #:image-transparent-color
-   #:width
-   #:image-width
-   #:height
-   #:image-height
-
-   #:embedded-tiled-image
-   #:format
-   #:image-format
-   #:data
-   #:image-data
-
-   #:make-image
-
-   #:external-tiled-image
-   #:source
-   #:image-source
 
    #:tterrain
    #:tterrain-name
@@ -86,9 +49,6 @@
    #:tpolyline
    #:tpolyline-points
    #:make-tpolyline
-
-   #:horizontal-alignment
-   #:vertical-alignment
 
    #:ttext
    #:ttext-text
@@ -124,8 +84,6 @@
    #:tobject-text
    #:tobject-image
    #:make-tobject
-
-   #:draw-order
 
    #:tlayer
    #:tlayer-name
@@ -181,9 +139,8 @@
    #:ttile-encoding
 
    #:ttile-data
-   #:encoding
-   #:compression
-   #:tiles
+   #:ttile-data-encoding
+   #:ttile-data-compression
    #:ttile-data-tiles
    #:make-ttile-data
 
@@ -198,11 +155,6 @@
    #:tlayer-group
    #:tlayer-group-layers
    #:make-tlayer-group
-
-   #:orientation
-   #:render-order
-   #:stagger-axis
-   #:stagger-index
 
    #:tmap
    #:tmap-version
@@ -238,89 +190,8 @@
 
 (in-package #:cl-tiled.impl)
 
-(defstruct tiled-color
-  (r #x00 :type (unsigned-byte 8))
-  (g #x00 :type (unsigned-byte 8))
-  (b #x00 :type (unsigned-byte 8))
-  (a #xFF :type (unsigned-byte 8)))
-
 (defparameter +transparent+ (make-tiled-color :a #x00))
 (defparameter +black+ (make-tiled-color))
-
-(deftype property-type ()
-  '(member :string :int :float :bool :color :file))
-
-(defgeneric property-name (property)
-  (:documentation "The name of the given property."))
-
-(defgeneric property-value (property)
-  (:documentation "The value of the given property."))
-
-(defgeneric property-value-string (property)
-  (:documentation "The string representation of this property's value."))
-
-(defclass property ()
-  ((name
-    :type string
-    :documentation "The name of this property"
-    :initarg :name
-    :initform (required-argument)
-    :reader property-name)
-   (string
-    :type string
-    :documentation "The verbatim string representation of this property."
-    :initarg :string
-    :initform (required-argument)
-    :reader property-value-string)))
-
-(defclass string-property (property)
-  ())
-
-(defmethod property-value ((property string-property))
-  (property-value-string property))
-
-(defclass int-property (property)
-  ((value
-    :type integer
-    :reader property-value
-    :initarg :value)))
-
-(defclass float-property (property)
-  ((value
-    :type float
-    :reader property-value
-    :initarg :value)))
-
-(defclass bool-property (property)
-  ((value
-    :type boolean
-    :reader property-value
-    :initarg :value)))
-
-(defclass color-property (property)
-  ((value
-    :type color
-    :reader property-value
-    :initarg :value)))
-
-(defclass file-property (property)
-  ((value
-    :type pathname
-    :reader property-value
-    :initarg :value)))
-
-(defgeneric property-type (property)
-  (:documentation "The `property-type' of the given `property'.")
-  (:method ((property string-property))
-    :string)
-  (:method ((property int-property))
-    :int)
-  (:method ((property float-property))
-    :float)
-  (:method ((property color-property))
-    :color)
-  (:method ((property file-property))
-    :file))
 
 (deftype timage-encoding ()
   '(member :base64))
@@ -333,47 +204,6 @@
   (compression nil :type tcompression)
   (data (make-array 0 :element-type '(unsigned-byte 8)) :type (simple-array (unsigned-byte 8) *)))
 
-(defclass tiled-image ()
-  ((transparent-color
-    :documentation "Color to use as 'transparent' (optional)"
-    :type tiled-color
-    :initarg :transparent-color
-    :reader image-transparent-color)
-   (width
-    :documentation "Width of the image in pixels (optional)"
-    :type integer
-    :initarg :width
-    :reader image-width)
-   (height
-    :documentation "Height of the image in pixels (optional)"
-    :type integer
-    :initarg :height
-    :reader image-height)))
-
-(defclass embedded-tiled-image (tiled-image)
-  ((format
-    :documentation "Format of the embedded image data as a string in the form \"png\", \"gif\", \"jpg\", \"bmp\", etc."
-    :type string
-    :initarg :format
-    :reader image-format)
-   (data
-    :documentation "Embedded data in the given format"
-    :type (simple-array (unsigned-byte 8))
-    :initarg :data
-    :reader image-data))
-  (:documentation
-   "An image that is embedded in the defining tileset/layer etc.
-`data' refers to the embedded image data"))
-
-(defclass external-tiled-image (tiled-image)
-  ((source
-    :documentation "Path to the image file"
-    :type pathname
-    :initarg :source
-    :reader image-source))
-  (:documentation
-   "An image that is stored externally. Source is a path referring to it."))
-
 (defstruct tterrain
   (name "" :type string)
   (tile 0 :type integer)
@@ -384,14 +214,6 @@
 
 (defstruct tpolyline
   (points () :type list))
-
-(deftype horizontal-alignment ()
-  "Horizontal alignment of text"
-  '(member :left :center :right))
-
-(deftype vertical-alignment ()
-  "Vertical alignment of text"
-  '(member :top :center :bottom))
 
 (defstruct ttext
   (text "" :type string)
@@ -424,12 +246,6 @@
   (polyline nil :type (or null tpolyline))
   (text nil :type (or null ttext))
   (image nil :type (or null tiled-image)))
-
-(deftype draw-order ()
-  "Draw order for objects in an `object-group'.
-  top-down - sorted by y coordinate
-  index - manual stacking, meaning drawn in defined order"
-  '(member :top-down :index))
 
 (defstruct tlayer
   (name "" :type string)
@@ -495,23 +311,6 @@
 
 (defstruct (tlayer-group (:include tlayer))
   (layers () :type list))
-
-(deftype orientation ()
-  "Orientation of the map"
-  '(member :orthogonal :isometric :staggered :hexagonal))
-
-(deftype render-order ()
-  '(member :right-down :right-up :left-down :left-up))
-
-(deftype stagger-axis ()
-  "Which axis is staggered.
-Only used by the staggered, and hexagonal maps"
-  '(member :x :y))
-
-(deftype stagger-index ()
-  "Whether the odd or even rows/columns are shifted.
-Only used by the staggered and hexagonal maps."
-  '(member :odd :even))
 
 (defstruct tmap
   (version "" :type (or null string))

@@ -19,12 +19,16 @@
 ;;;3. This notice may not be removed or altered from any source distribution.
 
 (defpackage #:cl-tiled.impl.xml
-  (:use #:alexandria #:cl #:cl-tiled.impl)
+  (:use
+   #:alexandria
+   #:cl
+   #:cl-tiled.data-types
+   #:cl-tiled.impl)
   (:export
    #:parse-xml-map-file
    #:parse-xml-tileset-file))
 
-(cl:in-package #:cl-tiled.impl.xml)
+(in-package #:cl-tiled.impl.xml)
 
 (defun xml-attr (node attr &optional (default nil))
   (or (xmls:xmlrep-attrib-value attr node nil)

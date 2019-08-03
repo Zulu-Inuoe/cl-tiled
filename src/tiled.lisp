@@ -18,591 +18,215 @@
 ;;;
 ;;;3. This notice may not be removed or altered from any source distribution.
 
-(cl:in-package #:cl-tiled)
+(defpackage #:cl-tiled
+  (:use
+   #:alexandria
+   #:cl
+   #:cl-tiled.data-types
+   #:cl-tiled.impl
+   #:cl-tiled.impl.xml
+   #:cl-tiled.impl.json)
+  (:import-from
+   #:cl-tiled.data-types
+   #:layers
+   #:tiles
+   #:cells
+   #:tile
+   #:tileset
+   #:terrains
+   #:object-group
+   #:frames)
+  (:export
+   #:load-map
+   #:load-tileset
 
-(defclass properties-mixin ()
-  ((properties
-    :type hash-table
-    :initform (make-hash-table :test 'equal)
-    :reader properties)))
+   #:tiled-color
+   #:tiled-color-r
+   #:tiled-color-g
+   #:tiled-color-b
+   #:tiled-color-a
 
-(defmethod initialize-instance :after ((obj properties-mixin)
-                                       &key (properties nil)
-                                       &aux (hash (properties obj)))
-  (dolist (property properties)
-    (setf (gethash (property-name property) hash) (property-value property))))
+   #:properties-mixin
+   #:properties
 
-(defun property-val (obj prop-name)
-  (values (gethash prop-name (properties obj))))
+   #:tiled-image
+   #:image-transparent-color
+   #:image-width
+   #:image-height
 
-(defclass object-group ()
-  ((objects
-    :documentation "The objects in this group."
-    :initarg :objects
-    :reader object-group-objects)
-   (draw-order
-    :documentation "The draw order for the objects on this group."
-    :type draw-order
-    :initarg :draw-order
-    :reader object-group-draw-order)))
+   #:embedded-tiled-image
+   #:image-format
+   #:image-data
 
-(defclass tiled-tile ()
-  ((tileset
-    :documentation "The tileset this tile belongs to."
-    :type tileset
-    :initarg :tileset
-    :reader tile-tileset)
-   (id
-    :documentation "The local ID of this tile within its tileset"
-    :type integer
-    :initarg :id
-    :reader tile-id)))
+   #:external-tiled-image
+   #:image-source
 
-(defclass tiled-tileset-tile (properties-mixin tiled-tile)
-  ((type
-    :documentation "'The type of the tile. Refers to an object type and is used by tile objects. (optional)'"
-    :type string
-    :initarg :type
-    :reader tile-type)
-   (terrains
-    :documentation "Defines the terrain types of each corner of the tile.
-0 - top left
-1 - top right
-2 - bottom left
-3 - bottom right
-If nil, indicates no terrain at that corner."
-    :type (simple-vector 4)
-    :initarg :terrains
-    :reader tile-terrains)
-   (probability
-    :documentation "'A percentage indicating the probability that this tile is chosen when it competes with others while editing with the terrain tool.'"
-    :type (or null real)
-    :initarg :probability
-    :reader tile-probability)
-   (object-group
-    :documentation "The collision objects in this tile"
-    :type (or null object-group)
-    :initform nil
-    :reader tile-object-group))
-  (:documentation
-   "A tile."))
+   #:object-group
+   #:object-group-objects
+   #:object-group-draw-order
 
-(defclass tiled-frame ()
-  ((tile
-    :documentation "The tile to use for this frame"
-    :type tiled-tile
-    :initarg :tile
-    :reader frame-tile)
-   (duration
-    :documentation "The length of this frame, in milliseconds"
-    :type integer
-    :initarg :duration
-    :reader frame-duration))
-  (:documentation
-   "One frame of animation for an animated tile.
-The `tile' here refers to the image to be displayed on this particular frame."))
+   #:tiled-tile
+   #:tile-tileset
+   #:tile-id
+   #:tile-column
+   #:tile-row
+   #:tile-pixel-x
+   #:tile-pixel-y
+   #:tile-width
+   #:tile-height
 
-(defun tile-column (tile)
-  (mod (tile-id tile) (tileset-columns (tile-tileset tile))))
+   #:tile-image
 
-(defun tile-row (tile)
-  (values (truncate (tile-id tile) (tileset-columns (tile-tileset tile)))))
+   #:tiled-tileset-tile
+   #:tile-type
+   #:tile-terrains
+   #:tile-probability
+   #:tile-object-group
 
-(defun tile-pixel-x (tile
-                          &aux
-                            (column (tile-column tile))
-                            (tileset (tile-tileset tile)))
-  (+ (* column (tileset-tile-width tileset))
-     (* column (tileset-spacing tileset))
-     (tileset-offset-x tileset)
-     (tileset-margin tileset)))
+   #:tiled-frame
+   #:frame-tile
+   #:frame-duration
 
-(defun tile-pixel-y (tile
-                       &aux
-                         (row (tile-row tile))
-                         (tileset (tile-tileset tile)))
-  (+ (* row (tileset-tile-height tileset))
-     (* row (tileset-spacing tileset))
-     (tileset-offset-y tileset)
-     (tileset-margin tileset)))
+   #:animated-tile
+   #:tile-frames
 
-(defun tile-width (tile)
-  (tileset-tile-width (tile-tileset tile)))
+   #:tiled-terrain
+   #:terrain-name
+   #:terrain-tile
 
-(defun tile-height (tile)
-  (tileset-tile-height (tile-tileset tile)))
+   #:tileset
+   #:tileset-name
+   #:tileset-first-gid
+   #:tileset-tile-width
+   #:tileset-tile-height
+   #:tileset-spacing
+   #:tileset-margin
+   #:tileset-tile-count
+   #:tileset-columns
+   #:tileset-offset-x
+   #:tileset-offset-y
+   #:tileset-image
+   #:tileset-tiles
+   #:tileset-terrains
 
-(defun tile-image (tile)
-  (tileset-image (tile-tileset tile)))
+   #:embedded-tileset
 
-(defclass animated-tile (tiled-tileset-tile)
-  ((frames
-    :documentation "A lit of animation frames"
-    :type list
-    :initarg :frames
-    :reader tile-frames))
-  (:documentation
-   "An animated tile. The frames are played in successive order, looping indefinitely"))
+   #:external-tileset
+   #:tileset-source
 
-(defclass tiled-terrain (properties-mixin)
-  ((name
-    :documentation "The name of the terrain type"
-    :type string
-    :initarg :name
-    :reader terrain-name)
-   (tile
-    :documentation "The tile this terrain type refers to"
-    :type (or null tiled-tile)
-    :initarg :tile
-    :reader terrain-tile)))
+   #:layer
+   #:layer-map
+   #:layer-parent
+   #:layer-name
+   #:layer-opacity
+   #:layer-visible
+   #:layer-offset-x
+   #:layer-offset-y
+   #:layer-tile-width
+   #:layer-tile-height
 
-(defclass tileset (properties-mixin)
-  ((name
-    :documentation "Name of this tileset"
-    :type string
-    :initarg :name
-    :reader tileset-name)
-   (first-gid
-    :documentation "First global tile ID of this tileset"
-    :type integer
-    :initarg :first-gid
-    :reader tileset-first-gid)
-   (tile-width
-    :documentation "The 'maximum' width of the tiles in this tileset in pixels"
-    :type integer
-    :initarg :tile-width
-    :reader tileset-tile-width)
-   (tile-height
-    :documentation "The 'maximum' height of the tiles in this tileset in pixels"
-    :type integer
-    :initarg :tile-height
-    :reader tileset-tile-height)
-   (spacing
-    :documentation "The spacing in pixels between the tiles in this tileset"
-    :type integer
-    :initarg :spacing
-    :reader tileset-spacing)
-   (margin
-    :documentation "The margin around the tiles in this tileset"
-    :type integer
-    :initarg :margin
-    :reader tileset-margin)
-   (tile-count
-    :documentation "The number of tiles in this tileset"
-    :type integer
-    :initarg :tile-count
-    :reader tileset-tile-count)
-   (columns
-    :documentation "The number of columns of tiles in this tileset"
-    :type integer
-    :initarg :columns
-    :reader tileset-columns)
-   (offset-x
-    :documentation "The offset that is applied when drawing the tiles in this tileset"
-    :type integer
-    :initarg :offset-x
-    :reader tileset-offset-x)
-   (offset-y
-    :documentation "The offset that is applied when drawing the tiles in this tileset"
-    :type integer
-    :initarg :offset-y
-    :reader tileset-offset-y)
-   (image
-    :documentation "The image to be used in this tileset"
-    :type tiled-image
-    :initarg :image
-    :reader tileset-image)
-   (tiles
-    :documentation "The tiles in this terrain"
-    :type list
-    :initarg :tiles
-    :reader tileset-tiles)
-   (terrains
-    :documentation "The terrain types in this tileset"
-    :type list
-    :initarg :terrains
-    :reader tileset-terrains)))
+   #:layer-full-offsets
 
-(defclass embedded-tileset (tileset)
-  ()
-  (:documentation
-   "A `tileset' that is embedded in the same file defining the map."))
+   #:cell
+   #:cell-layer
+   #:cell-tile
+   #:cell-flipped-anti-diagonal
+   #:cell-flipped-horizontal
+   #:cell-flipped-vertical
+   #:cell-column
+   #:cell-row
+   #:cell-x
+   #:cell-y
 
-(defclass external-tileset (tileset)
-  ((source
-    :documentation "The path to this tileset"
-    :type pathname
-    :initarg :source
-    :reader tileset-source))
-  (:documentation
-   "A `tileset' that is stored in a separate file from the map."))
+   #:cell-full-offsets
 
-(defun tileset-last-gid (tileset)
-  (with-slots (first-gid image tile-width tile-height)
-      tileset
-    (+ (* (truncate (image-width image) tile-width)
-          (truncate (image-height image) tile-height))
-       first-gid -1)))
+   #:tile-layer
+   #:layer-cells
 
-(defclass layer (properties-mixin)
-  ((map
-    :documentation "The map containing this layer"
-    :type tiled-map
-    :initarg :map
-    :reader layer-map)
-   (parent
-    :documentation "The parent group layer containing this layer, if any"
-    :type (or null group-layer)
-    :initarg :parent
-    :reader layer-parent)
-   (name
-    :documentation "The name of this layer"
-    :type string
-    :initarg :name
-    :reader layer-name)
-   (opacity
-    :documentation "The opacity of this layer, from 0 to 1"
-    :type (real 0 1)
-    :initarg :opacity
-    :reader layer-opacity)
-   (visible
-    :documentation "Whether or not the layer is visible"
-    :type boolean
-    :initarg :visible
-    :reader layer-visible)
-   (offset-x
-    :documentation "The horizontal rendering offset for this layer, in pixels"
-    :type integer
-    :initarg :offset-x
-    :reader layer-offset-x)
-   (offset-y
-    :documentation "The vertical rendering offset for this layer, in piyels"
-    :type integer
-    :initarg :offset-y
-    :reader layer-offset-y)))
+   #:object
+   #:object-id
+   #:object-name
+   #:object-type
+   #:object-x
+   #:object-y
+   #:object-rotation
+   #:object-visible
 
-(defun layer-tile-width (layer)
-  (map-tile-width (layer-map layer)))
+   #:rect-object
+   #:rect-width
+   #:rect-height
 
-(defun layer-tile-height (layer)
-  (map-tile-height (layer-map layer)))
+   #:ellipse-object
+   #:ellipse-rx
+   #:ellipse-ry
 
-(defun layer-full-offsets (layer)
-  (if (layer-parent layer)
-      (multiple-value-bind (x y)
-          (layer-full-offsets (layer-parent layer))
-        (values (+ x (layer-offset-x layer))
-                (+ y (layer-offset-y layer))))
-      (values (layer-offset-x layer)
-              (layer-offset-y layer))))
+   #:polygon-object
+   #:polygon-vertices
 
-(defclass cell ()
-  ((layer
-    :documentation "The tile-layer containing this cell"
-    :type tile-layer
-    :initarg :layer
-    :reader cell-layer)
-   (tile
-    :documentation "The tile at this cell"
-    :type tiled-tile
-    :initarg :tile
-    :reader cell-tile)
-   (flipped-anti-diagonal
-    :documentation "The tile is flipped anti-diagonally"
-    :type boolean
-    :initarg :flipped-anti-diagonal
-    :reader cell-flipped-anti-diagonal)
-   (flipped-horizontal
-    :documentation "The tile is flipped horizontally"
-    :type boolean
-    :initarg :flipped-horizontal
-    :reader cell-flipped-horizontal)
-   (flipped-vertical
-    :documentation "The tile is flipped vertically"
-    :type boolean
-    :initarg :flipped-vertical
-    :reader cell-flipped-vertical)
-   (column
-    :documentation "The column to draw this cell to, relative to its containing layer"
-    :type integer
-    :initarg :column
-    :reader cell-column)
-   (row
-    :documentation "The row to draw this cell to, relative to its containing layer"
-    :type integer
-    :initarg :row
-    :reader cell-row)))
+   #:polyline-object
+   #:polyline-points
 
-(defun cell-x (cell)
-  (* (cell-column cell)
-     (layer-tile-width (cell-layer cell))))
+   #:tile-object
+   #:object-tile
 
-(defun cell-y (cell)
-  (* (cell-row cell)
-     (layer-tile-height (cell-layer cell))))
+   #:horizontal-alignment
+   #:vertical-alignment
 
-(defun cell-full-offsets (cell)
-  (multiple-value-bind (x y)
-      (layer-full-offsets (cell-layer cell))
-    (values (+ x (cell-x cell))
-            (+ y (cell-y cell)))))
+   #:text-object
+   #:text-string
+   #:text-font-family
+   #:text-pixel-size
+   #:text-wrap
+   #:text-color
+   #:text-bold
+   #:text-italic
+   #:text-underline
+   #:text-strikeout
+   #:text-kerning
+   #:text-halign
+   #:text-valign
 
-(defclass tile-layer (layer)
-  ((cells
-    :documentation "The cells on this layer"
-    :type list
-    :initarg :cells
-    :reader layer-cells)))
+   #:image-object
+   #:object-image
 
-(defclass object (properties-mixin)
-  ((id
-    :documentation "Unique ID of the object."
-    :type integer
-    :initarg :id
-    :reader object-id)
-   (name
-    :documentation "The name of the object. An arbitrary string."
-    :type string
-    :initarg :name
-    :reader object-name)
-   (type
-    :documentation "The type of the object. An arbitrary string."
-    :type string
-    :initarg :type
-    :reader object-type)
-   (x
-    :documentation "The x coordinate of the object, in pixels."
-    :type integer
-    :initarg :x
-    :reader object-x)
-   (y
-    :documentation "The y coordinate of the object, in pixels."
-    :type integer
-    :initarg :y
-    :reader object-y)
-   (rotation
-    :documentation "The clockwise rotation of the object, in degrees."
-    :type float
-    :initarg :rotation
-    :reader object-rotation)
-   (visible
-    :documentation "Whether or not the object is visible."
-    :type boolean
-    :initarg :visible
-    :reader object-visible)))
+   #:draw-order
+   #:object-layer
 
-(defclass rect-object (object)
-  ((width
-    :documentation "The width of the rectangle, in pixels."
-    :type integer
-    :initarg :width
-    :reader rect-width)
-   (height
-    :documentation "The height of the rectangle, in pixels."
-    :type integer
-    :initarg :height
-    :reader rect-height)))
+   #:image-layer
+   #:layer-image
 
-(defclass ellipse-object (object)
-  ((rx
-    :documentation "The horizontal radius of this ellipse, in pixels"
-    :type integer
-    :initarg :rx
-    :reader ellipse-rx)
-   (ry
-    :documentation "The vertical radius of this ellipse, in pixels"
-    :type integer
-    :initarg :ry
-    :reader ellipse-ry)))
+   #:group-layer
+   #:group-layers
 
-(defclass polygon-object (object)
-  ((vertices
-    :documentation "A list of the form (x . y) of vertices, in pixels.
-These coordinates are relative to the x and y of the object"
-    :type list
-    :initarg :vertices
-    :reader polygon-vertices)))
+   #:orientation
 
-(defclass polyline-object (object)
-  ((points
-    :documentation "A list of the form (x . y) of points, in pixels.
-These coordinates are relative to the x and y of the object"
-    :type list
-    :initarg :points
-    :reader polyline-points)))
+   #:render-order
 
-(defclass tile-object (object)
-  ((tile
-    :documentation "The tile used by this object."
-    :type tiled-tile
-    :initarg :tile
-    :reader object-tile)))
+   #:stagger-axis
 
-(defclass text-object (object)
-  ((string
-    :documentation "The string of text"
-    :type string
-    :initarg :string
-    :reader text-string)
-   (font-family
-    :documentation "The font family used"
-    :type string
-    :initarg :font-family
-    :reader text-font-family)
-   (pixel-size
-    :documentation "The size of the font, in pixels (not points)"
-    :type integer
-    :initarg :pixel-size
-    :reader text-pixel-size)
-   (wrap
-    :documentation "Whether word wrapping is enabled or not"
-    :type boolean
-    :initarg :wrap
-    :reader text-wrap)
-   (color
-    :documentation "The color of the text"
-    :type tiled-color
-    :initarg :color
-    :reader text-color)
-   (bold
-    :documentation "Whether bold is enabled or not"
-    :type boolean
-    :initarg :bold
-    :reader text-bold)
-   (italic
-    :documentation "Whether italic is enabled or not"
-    :type boolean
-    :initarg :italic
-    :reader text-italic)
-   (underline
-    :documentation "Whether underline is enabled or not"
-    :type boolean
-    :initarg :underline
-    :reader text-underline)
-   (strikeout
-    :documentation "Whether strikeout is enabled or not"
-    :type boolean
-    :initarg :strikeout
-    :reader text-strikeout)
-   (kerning
-    :documentation "Whether kerning is enabled or not"
-    :type boolean
-    :initarg :kerning
-    :reader text-kerning)
-   (halign
-    :documentation "Horizontal alignment of the text"
-    :type horizontal-alignment
-    :initarg :halign
-    :reader text-halign)
-   (valign
-    :documentation "Horizontal alignment of the text"
-    :type vertical-alignment
-    :initarg :valign
-    :reader text-valign)))
+   #:stagger-index
 
-(defclass image-object (object)
-  ((image
-    :documentation "The image displayed by this object"
-    :type tiled-image
-    :initarg :image
-    :reader object-image)))
+   #:tiled-map
+   #:map-version
+   #:map-tiled-version
+   #:map-orientation
+   #:map-render-order
+   #:map-width
+   #:map-height
+   #:map-tile-width
+   #:map-tile-height
+   #:map-background-color
+   #:map-tilesets
+   #:map-layers
 
-(defclass object-layer (layer object-group)
-  ())
+   #:map-width-pixels
+   #:map-height-pixels
 
-(defclass image-layer (layer)
-  ((image
-    :documentation "The image displayed by this layer."
-    :type tiled-image
-    :initarg :image
-    :reader layer-image)))
+   #:map-tile-layers
+   #:map-object-layers
+   #:map-image-layers))
 
-(defclass group-layer (layer)
-  ((layers
-    :documentation "The layers nested in this group"
-    :type list
-    :initarg :layers
-    :reader group-layers)))
-
-(defclass tiled-map (properties-mixin)
-  ((version
-    :documentation "The TMX format version"
-    :type string
-    :initarg :version
-    :reader map-version)
-   (tiled-version
-    :documentation "The Tiled version used to save the file"
-    :type string
-    :initarg :tiled-version
-    :reader map-tiled-version)
-   (orientation
-    :documentation "The orientation of the map"
-    :type orientation
-    :initarg :orientation
-    :reader map-orientation)
-   (render-order
-    :documentation "The order in which tiles on each layer are rendered."
-    :type render-order
-    :initarg :render-order
-    :reader map-render-order)
-   (width
-    :documentation "Width of this map, in tiles."
-    :type integer
-    :initarg :width
-    :reader map-width)
-   (height
-    :documentation "Height of this map, in tiles."
-    :type integer
-    :initarg :height
-    :reader map-height)
-   (tile-width
-    :documentation "The width of each tile in this map, in pixels."
-    :type integer
-    :initarg :tile-width
-    :reader map-tile-width)
-   (tile-height
-    :documentation "The height of each tile in this map, in pixels."
-    :type integer
-    :initarg :tile-height
-    :reader map-tile-height)
-   (background-color
-    :documentation "The background color of this map."
-    :type tiled-color
-    :initarg :background-color
-    :reader map-background-color)
-   (tilesets
-    :documentation "All the tilesets of this map."
-    :type list
-    :initarg :tilesets
-    :reader map-tilesets)
-   (layers
-    :documentation "All the layers of this map."
-    :type list
-    :initarg :layers
-    :reader map-layers)))
-
-(defun map-tile-layers (map)
-  (loop :for layer :in (map-layers map)
-     :if (typep layer 'tile-layer)
-     :collect layer))
-
-(defun map-object-layers (map)
-  (loop :for layer :in (map-layers map)
-     :if (typep layer 'object-layer)
-     :collect layer))
-
-(defun map-image-layers (map)
-  (loop :for layer :in (map-layers map)
-     :if (typep layer 'image-layer)
-     :collect layer))
-
-(defun map-width-pixels (map)
-  (* (map-tile-width map)
-     (map-width map)))
-
-(defun map-height-pixels (map)
-  (* (map-tile-height map)
-     (map-height map)))
+(in-package #:cl-tiled)
 
 (defun load-map (path
                  &aux
@@ -648,21 +272,14 @@ These coordinates are relative to the x and y of the object"
   (loop
      :for tileset :in tilesets
      :for tlid := (- tgid (tileset-first-gid tileset))
-     :if (<= 0
-             tlid
-             (1- (tileset-tile-count tileset)))
-     :return
-     (let ((tile (find tlid
-                       (tileset-tiles tileset)
-                       :key #'tile-id)))
-       (unless tile
-         (setf tile (make-instance
-                     'tiled-tile
-                     :id tlid
-                     :tileset tileset))
-         (push tile (slot-value tileset 'tiles))
-         (setf (slot-value tileset 'tiles) (sort (slot-value tileset 'tiles) #'< :key #'tile-id)))
-       tile)))
+     :if (<= 0 tlid (1- (tileset-tile-count tileset)))
+       :return
+       (let ((tile (find tlid (tileset-tiles tileset) :key #'tile-id)))
+         (unless tile
+           (setf tile (make-instance 'tiled-tile :id tlid :tileset tileset))
+           (push tile (slot-value tileset 'tiles))
+           (setf (slot-value tileset 'tiles) (sort (slot-value tileset 'tiles) #'< :key #'tile-id)))
+         tile)))
 
 (defun %load-tile-layer (tlayer map parent
                          &aux (tilesets (map-tilesets map)))
@@ -814,7 +431,7 @@ These coordinates are relative to the x and y of the object"
         :y y
         :rotation (or rotation 0.0)
         :visible visible
-        :image (%load-image image)
+        :image image
         :properties properties))
       (t
        (make-instance
@@ -841,7 +458,7 @@ These coordinates are relative to the x and y of the object"
 (defun %finalize-objects (objects tobjects tilesets)
   (mapc
    (lambda (obj)
-     (%finalize-object obj (find (object-id obj) tobjects :key #'tobject-id)  tilesets))
+     (%finalize-object obj (find (object-id obj) tobjects :key #'tobject-id) tilesets))
    objects))
 
 (defun %load-image-layer (tlayer map parent)
@@ -954,8 +571,7 @@ These coordinates are relative to the x and y of the object"
            ;; found.
            (dolist (tframe (ttileset-tile-frames tile))
              (let* ((tile-id (tframe-tile-id tframe))
-                    (tl1 (find tile-id ttiles
-                              :key #'(lambda (til) (slot-value til 'id))))
+                    (tl1 (find tile-id ttiles :key #'ttileset-tile-id))
                     (tl2 (find tile-id other-frame-tids)))
                (unless (or tl1 tl2)
                  (push (make-instance 'tiled-tileset-tile

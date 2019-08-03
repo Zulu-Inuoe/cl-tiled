@@ -26,11 +26,11 @@
   :license "zlib/libpng License <http://opensource.org/licenses/zlib-license.php>"
   :pathname "src"
   :components
-  ((:file "tiled-data")
-   (:file "tiled-xml" :depends-on ("tiled-data"))
-   (:file "tiled-json" :depends-on ("tiled-data"))
-   (:file "package" :depends-on ("tiled-data" "tiled-xml" "tiled-json"))
-   (:file "tiled" :depends-on ("package" "tiled-data" "tiled-xml" "tiled-json")))
+  ((:file "data-types")
+   (:file "impl")
+   (:file "tiled-xml" :depends-on ("data-types" "impl"))
+   (:file "tiled-json" :depends-on ("data-types" "impl"))
+   (:file "tiled" :depends-on ("data-types" "impl" "tiled-xml" "tiled-json")))
   :depends-on
   (#:alexandria
    #:chipz

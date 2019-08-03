@@ -19,12 +19,16 @@
 ;;;3. This notice may not be removed or altered from any source distribution.
 
 (defpackage #:cl-tiled.impl.json
-  (:use #:alexandria #:cl #:cl-tiled.impl)
+  (:use
+   #:alexandria
+   #:cl
+   #:cl-tiled.data-types
+   #:cl-tiled.impl)
   (:export
    #:parse-json-map-file
    #:parse-json-tileset-file))
 
-(cl:in-package #:cl-tiled.impl.json)
+(in-package #:cl-tiled.impl.json)
 
 (defun json-attr (node attr &optional (default nil)
                   &aux (val (cdr (assoc attr node :test (lambda (a b) (string-equal (symbol-name a) (symbol-name b)))))))
