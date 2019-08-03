@@ -76,10 +76,10 @@
          :for (prop-name . prop-value) :in properties
          :for prop-type := (cdr (assoc prop-name property-types))
          :collect
-         (make-tproperty
-          :name (or (and prop-name (symbol-name prop-name)) "")
-          :type (or prop-type "")
-          :value (or prop-value "")))
+         (make-property
+          (or (and prop-name (symbol-name prop-name)) "")
+          (or prop-type "")
+          (or prop-value "")))
       (list)))
 
 (defun %parse-json-image (image)

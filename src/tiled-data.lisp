@@ -23,16 +23,86 @@
 
 (cl:in-package #:cl-tiled.impl)
 
-(defstruct tproperty
-  (name "" :type string)
-  (type "" :type string)
-  (value "" :type string))
-
 (defstruct tiled-color
   (r #x00 :type (unsigned-byte 8))
   (g #x00 :type (unsigned-byte 8))
   (b #x00 :type (unsigned-byte 8))
   (a #xFF :type (unsigned-byte 8)))
+
+(deftype property-type ()
+  '(member :string :int :float :bool :color :file))
+
+(defgeneric property-name (property)
+  (:documentation "The name of the given property."))
+
+(defgeneric property-value (property)
+  (:documentation "The value of the given property."))
+
+(defgeneric property-value-string (property)
+  (:documentation "The string representation of this property's value."))
+
+(defclass property ()
+  ((name
+    :type string
+    :documentation "The name of this property"
+    :initarg :name
+    :initform (required-argument)
+    :reader property-name)
+   (string
+    :type string
+    :documentation "The verbatim string representation of this property."
+    :initarg :string
+    :initform (required-argument)
+    :reader property-value-string)))
+
+(defclass string-property (property)
+  ())
+
+(defmethod property-value ((property string-property))
+  (property-value-string property))
+
+(defclass int-property (property)
+  ((value
+    :type integer
+    :reader property-value
+    :initarg :value)))
+
+(defclass float-property (property)
+  ((value
+    :type float
+    :reader property-value
+    :initarg :value)))
+
+(defclass bool-property (property)
+  ((value
+    :type boolean
+    :reader property-value
+    :initarg :value)))
+
+(defclass color-property (property)
+  ((value
+    :type color
+    :reader property-value
+    :initarg :value)))
+
+(defclass file-property (property)
+  ((value
+    :type pathname
+    :reader property-value
+    :initarg :value)))
+
+(defgeneric property-type (property)
+  (:documentation "The `property-type' of the given `property'.")
+  (:method ((property string-property))
+    :string)
+  (:method ((property int-property))
+    :int)
+  (:method ((property float-property))
+    :float)
+  (:method ((property color-property))
+    :color)
+  (:method ((property file-property))
+    :file))
 
 (deftype timage-encoding ()
   '(member :base64))
@@ -259,6 +329,28 @@
       :b (parse-integer color-str :start 7 :end 9 :radix 16)))
     (t
      default)))
+
+(defun make-property (name type value)
+  (eswitch (type :test 'string-equal)
+    (""
+     (make-instance 'string-property :name name :string value))
+    ("string"
+     (make-instance 'string-property :name name :string value))
+    ("int"
+     (make-instance 'int-property :name name :string value :value (parse-integer value)))
+    ("float"
+     (make-instance 'float-property :name name :string value :value (parse-float:parse-float value)))
+    ("bool"
+     (make-instance 'bool-property :name name :string value :value (string-equal value "true")))
+    ("color"
+     (make-instance 'color-property :name name :string value :value (parse-color-string value)))
+    ("file"
+     ;; Note, we assume `*default-pathname-defaults*' is set to a reasonable value
+     ;; This is because reconstructing a file path from the string later on would be
+     ;; quite difficult.
+     ;; This is generally The Right Thing
+     (make-instance 'file-property :name name :string value
+                                   :value (uiop:merge-pathnames* value *default-pathname-defaults*)))))
 
 (defun parse-image-encoding-string (encoding)
   (eswitch (encoding :test 'equalp)
