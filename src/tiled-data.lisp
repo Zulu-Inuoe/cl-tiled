@@ -667,7 +667,7 @@ Only used by the staggered and hexagonal maps."
   (eswitch (draw-order :test 'equalp)
     (nil nil)
     ("index" :index)
-    ("topdown" :topdown)))
+    ("topdown" :top-down)))
 
 (defun parse-orientation (orientation)
   (eswitch (orientation :test 'equalp)
