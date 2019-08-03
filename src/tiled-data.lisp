@@ -29,6 +29,8 @@
    #:tiled-color-g
    #:tiled-color-b
    #:make-tiled-color
+   #:+transparent+
+   #:+black+
 
    #:property-type
    #:property-name
@@ -51,14 +53,25 @@
    #:data
    #:make-timage-data
 
-   #:timage
-   #:timage-format
-   #:timage-source
-   #:timage-transparent-color
-   #:timage-width
-   #:timage-height
-   #:timage-image-data
-   #:make-timage
+   #:tiled-image
+   #:transparent-color
+   #:image-transparent-color
+   #:width
+   #:image-width
+   #:height
+   #:image-height
+
+   #:embedded-tiled-image
+   #:format
+   #:image-format
+   #:data
+   #:image-data
+
+   #:make-image
+
+   #:external-tiled-image
+   #:source
+   #:image-source
 
    #:tterrain
    #:tterrain-name
@@ -256,6 +269,9 @@
   (b #x00 :type (unsigned-byte 8))
   (a #xFF :type (unsigned-byte 8)))
 
+(defparameter +transparent+ (make-tiled-color :a #x00))
+(defparameter +black+ (make-tiled-color))
+
 (deftype property-type ()
   '(member :string :int :float :bool :color :file))
 
@@ -342,13 +358,46 @@
   (compression nil :type tcompression)
   (data (make-array 0 :element-type '(unsigned-byte 8)) :type (simple-array (unsigned-byte 8) *)))
 
-(defstruct timage
-  (format nil :type (or null string))
-  (source nil :type (or null string))
-  (transparent-color nil :type (or null tiled-color))
-  (width nil :type (or null integer))
-  (height nil :type (or null integer))
-  (image-data nil :type (or null timage-data)))
+(defclass tiled-image ()
+  ((transparent-color
+    :documentation "Color to use as 'transparent' (optional)"
+    :type tiled-color
+    :initarg :transparent-color
+    :reader image-transparent-color)
+   (width
+    :documentation "Width of the image in pixels (optional)"
+    :type integer
+    :initarg :width
+    :reader image-width)
+   (height
+    :documentation "Height of the image in pixels (optional)"
+    :type integer
+    :initarg :height
+    :reader image-height)))
+
+(defclass embedded-tiled-image (tiled-image)
+  ((format
+    :documentation "Format of the embedded image data as a string in the form \"png\", \"gif\", \"jpg\", \"bmp\", etc."
+    :type string
+    :initarg :format
+    :reader image-format)
+   (data
+    :documentation "Embedded data in the given format"
+    :type (simple-array (unsigned-byte 8))
+    :initarg :data
+    :reader image-data))
+  (:documentation
+   "An image that is embedded in the defining tileset/layer etc.
+`data' refers to the embedded image data"))
+
+(defclass external-tiled-image (tiled-image)
+  ((source
+    :documentation "Path to the image file"
+    :type pathname
+    :initarg :source
+    :reader image-source))
+  (:documentation
+   "An image that is stored externally. Source is a path referring to it."))
 
 (defstruct tterrain
   (name "" :type string)
@@ -399,7 +448,7 @@
   (polygon nil :type (or null tpolygon))
   (polyline nil :type (or null tpolyline))
   (text nil :type (or null ttext))
-  (image nil :type (or null timage)))
+  (image nil :type (or null tiled-image)))
 
 (deftype draw-order ()
   "Draw order for objects in an `object-group'.
@@ -432,7 +481,7 @@
   (terrain #(nil nil nil nil) :type (simple-vector 4))
   (probability nil :type (or null real))
   (properties () :type list)
-  (image nil :type (or null timage))
+  (image nil :type (or null tiled-image))
   (object-group nil :type (or null tobject-group))
   (frames () :type list))
 
@@ -449,7 +498,7 @@
   (tile-offset-x nil :type (or null integer))
   (tile-offset-y nil :type (or null integer))
   (properties () :type list)
-  (image nil :type (or null timage))
+  (image nil :type (or null tiled-image))
   (terrains () :type list)
   (tiles () :type list))
 
@@ -483,7 +532,7 @@
   (opacity 1.0 :type real)
   (visible t :type boolean)
   (properties () :type list)
-  (image nil :type (or null timage)))
+  (image nil :type (or null tiled-image)))
 
 (defstruct tlayer-group
   (name "" :type string)

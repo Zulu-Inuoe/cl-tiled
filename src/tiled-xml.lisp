@@ -89,24 +89,29 @@
 
 (defun %parse-xml-image-data (image-data)
   (if image-data
-      (let ((encoding (parse-image-encoding-string (xml-attr image-data "encoding")))
-            (compression (parse-compression-string (xml-attr image-data "compression"))))
-        (make-timage-data
-         :encoding encoding
-         :compression compression
-         :data (%parse-image-data encoding compression (xml-text image-data ""))))
-      nil))
+    (let ((encoding (parse-image-encoding-string (xml-attr image-data "encoding")))
+          (compression (parse-compression-string (xml-attr image-data "compression"))))
+      (%parse-image-data encoding compression (xml-text image-data "")))
+    (make-array 0 :element-type '(unsigned-byte 8))))
 
 (defun %parse-xml-image (image)
-  (if image
-      (make-timage
-       :format (xml-attr image "format")
-       :source (xml-attr image "source")
-       :transparent-color (xml-attr-color image "trans")
-       :width (xml-attr-int image "width")
-       :height (xml-attr-int image "height")
-       :image-data (%parse-xml-image-data (xml-child image "data")))
-      nil))
+  (when image
+    (let ((transparent-color (or (xml-attr-color image "trans") +transparent+))
+          (width (or (xml-attr-int image "width") 0))
+          (height (or (xml-attr-int image "height") 0))
+          (source (uiop:ensure-absolute-pathname (xml-attr image "source") *default-pathname-defaults*)))
+      (cond
+        (source
+         (make-instance 'external-tiled-image
+                        :source source
+                        :transparent-color transparent-color
+                        :width width :height height))
+        (t
+         (make-instance 'embedded-tiled-image
+                        :format (xml-attr image "format")
+                        :data (%parse-xml-image-data (xml-child image "data"))
+                        :transparent-color transparent-color
+                        :width width :height height))))))
 
 (defun %parse-xml-terrain (terrain)
   (make-tterrain
@@ -373,9 +378,11 @@
          (write-line (string-right-trim '(#\return) line) str)))))
 
 (defun parse-xml-map-file (path)
-  (%parse-xml-map
-   (xmls:parse (%slurp-file path))))
+  (let ((tree (xmls:parse (%slurp-file path))))
+    (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
+      (%parse-xml-map tree))))
 
 (defun parse-xml-tileset-file (path)
-  (%parse-xml-tileset
-   (xmls:parse (%slurp-file path))))
+  (let ((tree (xmls:parse (%slurp-file path))))
+    (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
+      (%parse-xml-tileset tree))))

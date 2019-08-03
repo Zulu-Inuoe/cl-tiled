@@ -26,9 +26,6 @@
     :initform (make-hash-table :test 'equal)
     :reader properties)))
 
-(defparameter +transparent+ (make-tiled-color :a #x00))
-(defparameter +black+ (make-tiled-color))
-
 (defmethod initialize-instance :after ((obj properties-mixin)
                                        &key (properties nil)
                                        &aux (hash (properties obj)))
@@ -37,47 +34,6 @@
 
 (defun property-val (obj prop-name)
   (values (gethash prop-name (properties obj))))
-
-(defclass tiled-image ()
-  ((transparent-color
-    :documentation "Color to use as 'transparent' (optional)"
-    :type tiled-color
-    :initarg :transparent-color
-    :reader image-transparent-color)
-   (width
-    :documentation "Width of the image in pixels (optional)"
-    :type integer
-    :initarg :width
-    :reader image-width)
-   (height
-    :documentation "Height of the image in pixels (optional)"
-    :type integer
-    :initarg :height
-    :reader image-height)))
-
-(defclass embedded-tiled-image (tiled-image)
-  ((format
-    :documentation "Format of the embedded image data as a string in the form \"png\", \"gif\", \"jpg\", \"bmp\", etc."
-    :type string
-    :initarg :format
-    :reader image-format)
-   (data
-    :documentation "Embedded data in the given format"
-    :type (simple-array (unsigned-byte 8))
-    :initarg :data
-    :reader image-data))
-  (:documentation
-   "An image that is embedded in the defining tileset/layer etc.
-`data' refers to the embedded image data"))
-
-(defclass external-tiled-image (tiled-image)
-  ((source
-    :documentation "Path to the image file"
-    :type pathname
-    :initarg :source
-    :reader image-source))
-  (:documentation
-   "An image that is stored externally. Source is a path referring to it."))
 
 (defclass object-group ()
   ((objects
@@ -656,34 +612,34 @@ These coordinates are relative to the x and y of the object"
                        (parse-xml-map-file path))
                       ("json"
                        (parse-json-map-file path)))))
-  (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
-    (let* ((loaded-tilesets
-             (mapcar #'%load-tileset (tmap-tilesets tmap)))
-           (ret
-             (make-instance
-              'tiled-map
-              :version (or (tmap-version tmap) "0.0")
-              :tiled-version (or (tmap-tiled-version tmap) "0.0.0")
-              :orientation (or (tmap-orientation tmap) :orthogonal)
-              :render-order (or (tmap-render-order tmap) :right-down)
-              :width (tmap-width tmap)
-              :height (tmap-height tmap)
-              :tile-width (tmap-tile-width tmap)
-              :tile-height (tmap-tile-height tmap)
-              :background-color (or (tmap-background-color tmap) +transparent+)
-              :tilesets loaded-tilesets
-              :properties (tmap-properties tmap)))
-           (loaded-layers
-             (mapcar
-              (lambda (l)
-                (etypecase l
-                  (ttile-layer (%load-tile-layer l ret nil))
-                  (tobject-group (%load-object-layer l ret nil))
-                  (timage-layer (%load-image-layer l ret nil))
-                  (tlayer-group (%load-layer-group l ret nil))))
-              (tmap-layers tmap))))
-      (setf (slot-value ret 'layers) loaded-layers)
-      ret)))
+  (let* ((loaded-tilesets
+           (uiop:with-pathname-defaults ((uiop:pathname-directory-pathname path))
+             (mapcar #'%load-tileset (tmap-tilesets tmap))))
+         (ret
+           (make-instance
+            'tiled-map
+            :version (or (tmap-version tmap) "0.0")
+            :tiled-version (or (tmap-tiled-version tmap) "0.0.0")
+            :orientation (or (tmap-orientation tmap) :orthogonal)
+            :render-order (or (tmap-render-order tmap) :right-down)
+            :width (tmap-width tmap)
+            :height (tmap-height tmap)
+            :tile-width (tmap-tile-width tmap)
+            :tile-height (tmap-tile-height tmap)
+            :background-color (or (tmap-background-color tmap) +transparent+)
+            :tilesets loaded-tilesets
+            :properties (tmap-properties tmap)))
+         (loaded-layers
+           (mapcar
+            (lambda (l)
+              (etypecase l
+                (ttile-layer (%load-tile-layer l ret nil))
+                (tobject-group (%load-object-layer l ret nil))
+                (timage-layer (%load-image-layer l ret nil))
+                (tlayer-group (%load-layer-group l ret nil))))
+            (tmap-layers tmap))))
+    (setf (slot-value ret 'layers) loaded-layers)
+    ret))
 
 (defun load-tileset (path)
   (%load-external-tileset path 0))
@@ -898,7 +854,7 @@ These coordinates are relative to the x and y of the object"
    :visible (timage-layer-visible tlayer)
    :offset-x (timage-layer-offset-x tlayer)
    :offset-y (timage-layer-offset-y tlayer)
-   :image (%load-image (timage-layer-image tlayer))
+   :image (timage-layer-image tlayer)
    :properties (timage-layer-properties tlayer)))
 
 (defun %load-layer-group (tlayer map parent)
@@ -930,41 +886,38 @@ These coordinates are relative to the x and y of the object"
       (%load-embedded-tileset ttileset)))
 
 (defun %load-external-tileset (path first-gid
-                     &aux
-                       (full-path (uiop:ensure-absolute-pathname path *default-pathname-defaults*))
-                       (ttileset
-                        (eswitch ((pathname-type full-path) :test 'string-equal)
-                          ("tsx"
-                           (parse-xml-tileset-file full-path))
-                          ("json"
-                           (parse-json-tileset-file full-path)))))
-  (uiop:with-current-directory ((uiop:pathname-directory-pathname full-path))
-    (let* ((image (%load-image (ttileset-image ttileset)))
-           (tiles (%load-tiles (ttileset-tiles ttileset)))
-           (terrains (%load-terrains (ttileset-terrains ttileset) tiles))
-           (ret
-             (make-instance
-              'external-tileset
-              :source full-path
-              :name (ttileset-name ttileset)
-              :first-gid first-gid
-              :tile-width (ttileset-tile-width ttileset)
-              :tile-height (ttileset-tile-height ttileset)
-              :spacing (ttileset-spacing ttileset)
-              :margin (ttileset-margin ttileset)
-              :tile-count (ttileset-tile-count ttileset)
-              :columns (ttileset-columns ttileset)
-              :offset-x (ttileset-tile-offset-x ttileset)
-              :offset-y (ttileset-tile-offset-y ttileset)
-              :image image
-              :terrains terrains)))
-      (%finalize-tiles tiles (ttileset-tiles ttileset) ret)
-      (setf (slot-value ret 'tiles) tiles)
-      ret)))
+                               &aux
+                                 (full-path (uiop:ensure-absolute-pathname path *default-pathname-defaults*))
+                                 (ttileset
+                                  (eswitch ((pathname-type full-path) :test 'string-equal)
+                                    ("tsx"
+                                     (parse-xml-tileset-file full-path))
+                                    ("json"
+                                     (parse-json-tileset-file full-path)))))
+  (let* ((tiles (%load-tiles (ttileset-tiles ttileset)))
+         (terrains (%load-terrains (ttileset-terrains ttileset) tiles))
+         (ret
+           (make-instance
+            'external-tileset
+            :source full-path
+            :name (ttileset-name ttileset)
+            :first-gid first-gid
+            :tile-width (ttileset-tile-width ttileset)
+            :tile-height (ttileset-tile-height ttileset)
+            :spacing (ttileset-spacing ttileset)
+            :margin (ttileset-margin ttileset)
+            :tile-count (ttileset-tile-count ttileset)
+            :columns (ttileset-columns ttileset)
+            :offset-x (ttileset-tile-offset-x ttileset)
+            :offset-y (ttileset-tile-offset-y ttileset)
+            :image (ttileset-image ttileset)
+            :terrains terrains)))
+    (%finalize-tiles tiles (ttileset-tiles ttileset) ret)
+    (setf (slot-value ret 'tiles) tiles)
+    ret))
 
 (defun %load-embedded-tileset (ttileset)
-  (let* ((image (%load-image (ttileset-image ttileset)))
-         (tiles (%load-tiles (ttileset-tiles ttileset)))
+  (let* ((tiles (%load-tiles (ttileset-tiles ttileset)))
          (terrains (%load-terrains (ttileset-terrains ttileset) tiles))
          (tileset
            (make-instance
@@ -979,30 +932,11 @@ These coordinates are relative to the x and y of the object"
             :columns (ttileset-columns ttileset)
             :offset-x (ttileset-tile-offset-x ttileset)
             :offset-y (ttileset-tile-offset-y ttileset)
-            :image image
+            :image (ttileset-image ttileset)
             :tiles tiles
             :terrains terrains)))
     (%finalize-tiles tiles (ttileset-tiles ttileset) tileset)
     tileset))
-
-(defun %load-image (timage)
-  (when timage
-    (cond
-      ((timage-source timage)
-       (make-instance
-        'external-tiled-image
-        :source (uiop:merge-pathnames* (timage-source timage))
-        :transparent-color (or (timage-transparent-color timage) +transparent+)
-        :width (or (timage-width timage) 0)
-        :height (or (timage-height timage) 0)))
-      (t
-       (make-instance
-         'embedded-tiled-image
-         :format (timage-format timage)
-         :data (timage-image-data timage)
-         :transparent-color (or (timage-transparent-color timage) +transparent+)
-         :width (or (timage-width timage) 0)
-         :height (or (timage-height timage) 0))))))
 
 (defun %load-tiles (ttiles)
   ;; It can happen that the tiles other than the first frame for an animated

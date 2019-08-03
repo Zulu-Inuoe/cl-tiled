@@ -83,15 +83,11 @@
       (list)))
 
 (defun %parse-json-image (image)
-  (if image
-      (make-timage
-       :format nil
-       :source image
-       :transparent-color nil
-       :width nil
-       :height nil
-       :image-data nil)
-      nil))
+  (when image
+    (make-instance 'external-tiled-image
+                   :source image
+                   :transparent-color +transparent+
+                   :width 0 :height 0)))
 
 (defun %parse-json-terrain (terrain)
   (make-tterrain
@@ -303,17 +299,19 @@
   str)
 
 (defun parse-json-map-file (path)
-  (%parse-json-map
-   (let ((cl-json:*json-identifier-name-to-lisp* #'ident-handler)
-         (cl-json:*boolean-handler* #'bool-handler)
-         (cl-json:*json-array-type* 'cl:vector))
-     (with-open-file (stream path)
-       (cl-json:decode-json stream)))))
+  (let ((tree (let ((cl-json:*json-identifier-name-to-lisp* #'ident-handler)
+                    (cl-json:*boolean-handler* #'bool-handler)
+                    (cl-json:*json-array-type* 'cl:vector))
+                (with-open-file (stream path)
+                  (cl-json:decode-json stream)))))
+    (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
+      (%parse-json-map tree))))
 
 (defun parse-json-tileset-file (path)
-  (%parse-json-tileset
-   (let ((cl-json:*json-identifier-name-to-lisp* #'ident-handler)
-         (cl-json:*boolean-handler* #'bool-handler)
-         (cl-json:*json-array-type* 'cl:vector))
-     (with-open-file (stream path)
-       (cl-json:decode-json stream)))))
+  (let ((tree (let ((cl-json:*json-identifier-name-to-lisp* #'ident-handler)
+                    (cl-json:*boolean-handler* #'bool-handler)
+                    (cl-json:*json-array-type* 'cl:vector))
+                (with-open-file (stream path)
+                  (cl-json:decode-json stream)))))
+    (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
+      (%parse-json-tileset tree))))
