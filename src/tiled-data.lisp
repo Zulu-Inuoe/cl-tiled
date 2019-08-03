@@ -19,9 +19,252 @@
 ;;;3. This notice may not be removed or altered from any source distribution.
 
 (defpackage #:cl-tiled.impl
-  (:use #:alexandria #:cl))
+  (:use
+   #:alexandria
+   #:cl)
+  (:export
+   #:tiled-color
+   #:tiled-color-a
+   #:tiled-color-r
+   #:tiled-color-g
+   #:tiled-color-b
+   #:make-tiled-color
 
-(cl:in-package #:cl-tiled.impl)
+   #:property-type
+   #:property-name
+   #:property-value
+   #:property-value-string
+
+   #:string-property
+   #:int-property
+   #:float-property
+   #:bool-property
+   #:color-property
+   #:file-property
+
+   #:timage-encoding
+   #:tcompression
+
+   #:timage-data
+   #:encoding
+   #:compression
+   #:data
+   #:make-timage-data
+
+   #:timage
+   #:format
+   #:source
+   #:transparent-color
+   #:width
+   #:height
+   #:image-data
+   #:make-timage
+
+   #:tterrain
+   #:name
+   #:tile
+   #:properties
+   #:make-tterrain
+
+   #:tellipse
+   #:make-tellipse
+
+   #:tpoint
+   #:x
+   #:tpoint-x
+   #:y
+   #:tpoint-y
+   #:make-tpoint
+
+   #:tpolygon
+   #:points
+   #:make-tpolygon
+
+   #:tpolyline
+   #:points
+   #:make-tpolyline
+
+   #:horizontal-alignment
+   #:vertical-alignment
+
+   #:ttext
+   #:text
+   #:font-family
+   #:pixel-size
+   #:wrap
+   #:color
+   #:bold
+   #:italic
+   #:underline
+   #:strikeout
+   #:kerning
+   #:halign
+   #:valign
+   #:make-ttext
+
+   #:tobject
+   #:id
+   #:tobject-id
+   #:name
+   #:type
+   #:x
+   #:y
+   #:width
+   #:height
+   #:rotation
+   #:gid
+   #:tobject-gid
+   #:visible
+   #:properties
+   #:ellipse
+   #:polygon
+   #:polyline
+   #:text
+   #:image
+   #:make-tobject
+
+   #:draw-order
+
+   #:tobject-group
+   #:name
+   #:color
+   #:x
+   #:y
+   #:width
+   #:height
+   #:opacity
+   #:visible
+   #:offset-x
+   #:offset-y
+   #:draw-order
+   #:tobject-group-draw-order
+   #:properties
+   #:objects
+   #:tobject-group-objects
+   #:make-tobject-group
+
+   #:tframe
+   #:tile-id
+   #:duration
+   #:make-tframe
+
+   #:ttileset-tile
+   #:id
+   #:type
+   #:terrain
+   #:ttileset-tile-terrain
+   #:probability
+   #:properties
+   #:image
+   #:object-group
+   #:ttileset-tile-object-group
+   #:frames
+   #:ttileset-tile-frames
+   #:make-ttileset-tile
+
+   #:ttileset
+   #:first-gid
+   #:source
+   #:name
+   #:tile-width
+   #:tile-height
+   #:spacing
+   #:margin
+   #:tile-count
+   #:columns
+   #:tile-offset-x
+   #:tile-offset-y
+   #:properties
+   #:image
+   #:terrains
+   #:tiles
+   #:make-ttileset
+
+   #:ttile-encoding
+
+   #:ttile-data
+   #:encoding
+   #:compression
+   #:tiles
+   #:ttile-data-tiles
+   #:make-ttile-data
+
+   #:ttile-layer
+   #:name
+   #:x
+   #:y
+   #:width
+   #:height
+   #:opacity
+   #:visible
+   #:offset-x
+   #:offset-y
+   #:properties
+   #:tile-data
+   #:make-ttile-layer
+
+   #:timage-layer
+   #:name
+   #:offset-x
+   #:offset-y
+   #:x
+   #:y
+   #:opacity
+   #:visible
+   #:properties
+   #:image
+   #:make-timage-layer
+
+   #:tlayer-group
+   #:name
+   #:offset-x
+   #:offset-y
+   #:x
+   #:y
+   #:opacity
+   #:visible
+   #:properties
+   #:layers
+   #:make-tlayer-group
+
+   #:orientation
+   #:render-order
+   #:stagger-axis
+   #:stagger-index
+
+   #:tmap
+   #:version
+   #:tiled-version
+   #:orientation
+   #:render-order
+   #:width
+   #:height
+   #:tile-width
+   #:tile-height
+   #:hex-side-length
+   #:stagger-axis
+   #:stagger-index
+   #:background-color
+   #:next-object-id
+   #:properties
+   #:tilesets
+   #:layers
+   #:make-tmap
+
+   #:parse-color-string
+   #:make-property
+   #:parse-image-encoding-string
+   #:parse-compression-string
+   #:parse-tile-encoding-string
+   #:parse-halign
+   #:parse-valign
+   #:parse-draw-order
+   #:parse-orientation
+   #:parse-render-order
+   #:parse-stagger-axis
+   #:parse-stagger-index))
+
+(in-package #:cl-tiled.impl)
 
 (defstruct tiled-color
   (r #x00 :type (unsigned-byte 8))
@@ -426,10 +669,3 @@ Only used by the staggered and hexagonal maps."
     (nil nil)
     ("even" :even)
     ("odd" :odd)))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (let ((exported-symbols ()))
-    (do-symbols (s)
-      (when (eq (symbol-package s) *package*)
-        (push s exported-symbols)))
-    (export exported-symbols)))
