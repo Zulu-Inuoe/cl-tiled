@@ -52,132 +52,124 @@
    #:make-timage-data
 
    #:timage
-   #:format
-   #:source
-   #:transparent-color
-   #:width
-   #:height
-   #:image-data
+   #:timage-format
+   #:timage-source
+   #:timage-transparent-color
+   #:timage-width
+   #:timage-height
+   #:timage-image-data
    #:make-timage
 
    #:tterrain
-   #:name
-   #:tile
-   #:properties
+   #:tterrain-name
+   #:tterrain-tile
+   #:tterrain-properties
    #:make-tterrain
 
    #:tellipse
    #:make-tellipse
 
    #:tpoint
-   #:x
    #:tpoint-x
-   #:y
    #:tpoint-y
    #:make-tpoint
 
    #:tpolygon
-   #:points
+   #:tpolygon-points
    #:make-tpolygon
 
    #:tpolyline
-   #:points
+   #:tpolyline-points
    #:make-tpolyline
 
    #:horizontal-alignment
    #:vertical-alignment
 
    #:ttext
-   #:text
-   #:font-family
-   #:pixel-size
-   #:wrap
-   #:color
-   #:bold
-   #:italic
-   #:underline
-   #:strikeout
-   #:kerning
-   #:halign
-   #:valign
+   #:ttext-text
+   #:ttext-font-family
+   #:ttext-pixel-size
+   #:ttext-wrap
+   #:ttext-color
+   #:ttext-bold
+   #:ttext-italic
+   #:ttext-underline
+   #:ttext-strikeout
+   #:ttext-kerning
+   #:ttext-halign
+   #:ttext-valign
    #:make-ttext
 
    #:tobject
-   #:id
    #:tobject-id
-   #:name
-   #:type
-   #:x
-   #:y
-   #:width
-   #:height
-   #:rotation
-   #:gid
+   #:tobject-name
+   #:tobject-type
+   #:tobject-x
+   #:tobject-y
+   #:tobject-width
+   #:tobject-height
+   #:tobject-rotation
    #:tobject-gid
-   #:visible
-   #:properties
-   #:ellipse
-   #:polygon
-   #:polyline
-   #:text
-   #:image
+   #:tobject-tobject-gid
+   #:tobject-visible
+   #:tobject-properties
+   #:tobject-ellipse
+   #:tobject-polygon
+   #:tobject-polyline
+   #:tobject-text
+   #:tobject-image
    #:make-tobject
 
    #:draw-order
 
    #:tobject-group
-   #:name
-   #:color
-   #:x
-   #:y
-   #:width
-   #:height
-   #:opacity
-   #:visible
-   #:offset-x
-   #:offset-y
-   #:draw-order
+   #:tobject-group-name
+   #:tobject-group-color
+   #:tobject-group-x
+   #:tobject-group-y
+   #:tobject-group-width
+   #:tobject-group-height
+   #:tobject-group-opacity
+   #:tobject-group-visible
+   #:tobject-group-offset-x
+   #:tobject-group-offset-y
    #:tobject-group-draw-order
-   #:properties
-   #:objects
+   #:tobject-group-properties
    #:tobject-group-objects
    #:make-tobject-group
 
    #:tframe
-   #:tile-id
-   #:duration
+   #:tframe-tile-id
+   #:tframe-duration
    #:make-tframe
 
    #:ttileset-tile
-   #:id
-   #:type
-   #:terrain
+   #:ttileset-tile-id
+   #:ttileset-tile-type
    #:ttileset-tile-terrain
-   #:probability
-   #:properties
-   #:image
-   #:object-group
+   #:ttileset-tile-probability
+   #:ttileset-tile-properties
+   #:ttileset-tile-image
    #:ttileset-tile-object-group
-   #:frames
    #:ttileset-tile-frames
    #:make-ttileset-tile
 
    #:ttileset
-   #:first-gid
-   #:source
-   #:name
-   #:tile-width
-   #:tile-height
-   #:spacing
-   #:margin
-   #:tile-count
-   #:columns
-   #:tile-offset-x
-   #:tile-offset-y
-   #:properties
-   #:image
-   #:terrains
-   #:tiles
+   #:ttileset-first-gid
+   #:ttileset-source
+   #:ttileset-name
+   #:ttileset-tile-width
+   #:ttileset-tile-height
+   #:ttileset-spacing
+   #:ttileset-margin
+   #:ttileset-tile-count
+   #:ttileset-columns
+   #:ttileset-tile-offset-x
+   #:ttileset-tile-offset-y
+   #:ttileset-properties
+   #:ttileset-image
+   #:ttileset-terrains
+   #:ttileset-tiles
    #:make-ttileset
 
    #:ttile-encoding
@@ -190,41 +182,41 @@
    #:make-ttile-data
 
    #:ttile-layer
-   #:name
-   #:x
-   #:y
-   #:width
-   #:height
-   #:opacity
-   #:visible
-   #:offset-x
-   #:offset-y
-   #:properties
-   #:tile-data
+   #:ttile-layer-name
+   #:ttile-layer-x
+   #:ttile-layer-y
+   #:ttile-layer-width
+   #:ttile-layer-height
+   #:ttile-layer-opacity
+   #:ttile-layer-visible
+   #:ttile-layer-offset-x
+   #:ttile-layer-offset-y
+   #:ttile-layer-properties
+   #:ttile-layer-tile-data
    #:make-ttile-layer
 
    #:timage-layer
-   #:name
-   #:offset-x
-   #:offset-y
-   #:x
-   #:y
-   #:opacity
-   #:visible
-   #:properties
-   #:image
+   #:timage-layer-name
+   #:timage-layer-offset-x
+   #:timage-layer-offset-y
+   #:timage-layer-x
+   #:timage-layer-y
+   #:timage-layer-opacity
+   #:timage-layer-visible
+   #:timage-layer-properties
+   #:timage-layer-image
    #:make-timage-layer
 
    #:tlayer-group
-   #:name
-   #:offset-x
-   #:offset-y
-   #:x
-   #:y
-   #:opacity
-   #:visible
-   #:properties
-   #:layers
+   #:tlayer-group-name
+   #:tlayer-group-offset-x
+   #:tlayer-group-offset-y
+   #:tlayer-group-x
+   #:tlayer-group-y
+   #:tlayer-group-opacity
+   #:tlayer-group-visible
+   #:tlayer-group-properties
+   #:tlayer-group-layers
    #:make-tlayer-group
 
    #:orientation
@@ -233,22 +225,22 @@
    #:stagger-index
 
    #:tmap
-   #:version
-   #:tiled-version
-   #:orientation
-   #:render-order
-   #:width
-   #:height
-   #:tile-width
-   #:tile-height
-   #:hex-side-length
-   #:stagger-axis
-   #:stagger-index
-   #:background-color
-   #:next-object-id
-   #:properties
-   #:tilesets
-   #:layers
+   #:tmap-version
+   #:tmap-tiled-version
+   #:tmap-orientation
+   #:tmap-render-order
+   #:tmap-width
+   #:tmap-height
+   #:tmap-tile-width
+   #:tmap-tile-height
+   #:tmap-hex-side-length
+   #:tmap-stagger-axis
+   #:tmap-stagger-index
+   #:tmap-background-color
+   #:tmap-next-object-id
+   #:tmap-properties
+   #:tmap-tilesets
+   #:tmap-layers
    #:make-tmap
 
    #:parse-color-string

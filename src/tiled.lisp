@@ -657,37 +657,33 @@ These coordinates are relative to the x and y of the object"
                       ("json"
                        (parse-json-map-file path)))))
   (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
-    (with-slots (version tiled-version orientation render-order
-                         width height tile-width tile-height background-color
-                         tilesets layers properties)
-        tmap
-      (let* ((loaded-tilesets
-              (mapcar #'%load-tileset tilesets))
-             (ret
-              (make-instance
-               'tiled-map
-               :version (or version "0.0")
-               :tiled-version (or tiled-version "0.0.0")
-               :orientation (or orientation :orthogonal)
-               :render-order (or render-order :right-down)
-               :width width
-               :height height
-               :tile-width tile-width
-               :tile-height tile-height
-               :background-color (or background-color +transparent+)
-               :tilesets loaded-tilesets
-               :properties properties))
-             (loaded-layers
-              (mapcar
-               (lambda (l)
-                 (etypecase l
-                   (ttile-layer (%load-tile-layer l ret nil))
-                   (tobject-group (%load-object-layer l ret nil))
-                   (timage-layer (%load-image-layer l ret nil))
-                   (tlayer-group (%load-layer-group l ret nil))))
-               layers)))
-        (setf (slot-value ret 'layers) loaded-layers)
-        ret))))
+    (let* ((loaded-tilesets
+             (mapcar #'%load-tileset (tmap-tilesets tmap)))
+           (ret
+             (make-instance
+              'tiled-map
+              :version (or (tmap-version tmap) "0.0")
+              :tiled-version (or (tmap-tiled-version tmap) "0.0.0")
+              :orientation (or (tmap-orientation tmap) :orthogonal)
+              :render-order (or (tmap-render-order tmap) :right-down)
+              :width (tmap-width tmap)
+              :height (tmap-height tmap)
+              :tile-width (tmap-tile-width tmap)
+              :tile-height (tmap-tile-height tmap)
+              :background-color (or (tmap-background-color tmap) +transparent+)
+              :tilesets loaded-tilesets
+              :properties (tmap-properties tmap)))
+           (loaded-layers
+             (mapcar
+              (lambda (l)
+                (etypecase l
+                  (ttile-layer (%load-tile-layer l ret nil))
+                  (tobject-group (%load-object-layer l ret nil))
+                  (timage-layer (%load-image-layer l ret nil))
+                  (tlayer-group (%load-layer-group l ret nil))))
+              (tmap-layers tmap))))
+      (setf (slot-value ret 'layers) loaded-layers)
+      ret)))
 
 (defun load-tileset (path)
   (%load-external-tileset path 0))
@@ -714,67 +710,74 @@ These coordinates are relative to the x and y of the object"
 
 (defun %load-tile-layer (tlayer map parent
                          &aux (tilesets (map-tilesets map)))
-  (with-slots (name opacity visible width height offset-x
-                    offset-y tile-data properties)
-      tlayer
-    (let ((ret (make-instance
-                'tile-layer
-                :map map
-                :parent parent
-                :name name
-                :opacity opacity
-                :visible visible
-                :offset-x offset-x
-                :offset-y offset-y
-                :properties properties)))
-      (setf (slot-value ret 'cells)
-            (loop
-               :for i :from 0
-               :for tgid :in (ttile-data-tiles tile-data)
-               :for tile := (%find-tile (mask-field (byte 29 0) tgid) tilesets)
-               :when tile
-               :collect
-               (multiple-value-bind (row col)
-                   (truncate i width)
-                 (make-instance
-                  'cell
-                  :row row
-                  :column col
-                  :tile tile
-                  :flipped-anti-diagonal (logbitp 29 tgid)
-                  :flipped-vertical (logbitp 30 tgid)
-                  :flipped-horizontal (logbitp 31 tgid)
-                  :layer ret))))
-      ret)))
+  (let ((ret (make-instance
+              'tile-layer
+              :map map
+              :parent parent
+              :name (ttile-layer-name tlayer)
+              :opacity (ttile-layer-opacity tlayer)
+              :visible (ttile-layer-visible tlayer)
+              :offset-x (ttile-layer-offset-x tlayer)
+              :offset-y (ttile-layer-offset-y tlayer)
+              :properties (ttile-layer-properties tlayer))))
+    (setf (slot-value ret 'cells)
+          (loop
+            :for i :from 0
+            :for tgid :in (ttile-data-tiles (ttile-layer-tile-data tlayer))
+            :for tile := (%find-tile (mask-field (byte 29 0) tgid) tilesets)
+            :when tile
+              :collect
+              (multiple-value-bind (row col)
+                  (truncate i (ttile-layer-width tlayer))
+                (make-instance
+                 'cell
+                 :row row
+                 :column col
+                 :tile tile
+                 :flipped-anti-diagonal (logbitp 29 tgid)
+                 :flipped-vertical (logbitp 30 tgid)
+                 :flipped-horizontal (logbitp 31 tgid)
+                 :layer ret))))
+    ret))
 
 (defun %load-object-layer (tgroup map parent
                            &aux (tilesets (map-tilesets map)))
-  (with-slots (name opacity visible width height offset-x
-                    offset-y draw-order (tobjects objects) properties)
-      tgroup
-    (let ((ret
-           (make-instance
-            'object-layer
-            :map map
-            :parent parent
-            :name name
-            :opacity opacity
-            :visible visible
-            :offset-x offset-x
-            :offset-y offset-y
-            :draw-order draw-order
-            :objects (%load-objects tobjects)
-            :properties properties)))
-      (%finalize-object-layer ret tobjects tilesets)
-      ret)))
+  (let ((ret
+          (make-instance
+           'object-layer
+           :map map
+           :parent parent
+           :name (tobject-group-name tgroup)
+           :opacity (tobject-group-opacity tgroup)
+           :visible (tobject-group-visible tgroup)
+           :offset-x (tobject-group-offset-x tgroup)
+           :offset-y (tobject-group-offset-y tgroup)
+           :draw-order (tobject-group-draw-order tgroup)
+           :objects (%load-objects (tobject-group-objects tgroup))
+           :properties (tobject-group-properties tgroup))))
+    (%finalize-object-layer ret (tobject-group-objects tgroup) tilesets)
+    ret))
 
 (defun %finalize-object-layer (object-layer tobjects tilesets)
   (%finalize-objects (object-group-objects object-layer) tobjects tilesets))
 
 (defun %load-object (tobject)
-  (with-slots (id name type x y width height rotation gid visible properties
-                  ellipse polygon polyline text image)
-      tobject
+  (let ((id (tobject-id tobject))
+        (name (tobject-name tobject))
+        (type (tobject-type tobject))
+        (x (tobject-x tobject))
+        (y (tobject-y tobject))
+        (width (tobject-width tobject))
+        (height (tobject-height tobject))
+        (rotation (tobject-rotation tobject))
+        (visible (tobject-visible tobject))
+        (properties (tobject-properties tobject))
+        (ellipse (tobject-ellipse tobject))
+        (polygon (tobject-polygon tobject))
+        (polyline (tobject-polyline tobject))
+        (text (tobject-text tobject))
+        (gid (tobject-gid tobject))
+        (image (tobject-image tobject)))
     (cond
       (ellipse
        (make-instance
@@ -790,67 +793,59 @@ These coordinates are relative to the x and y of the object"
         :ry height
         :properties properties))
       (polygon
-       (with-slots (points)
-           polygon
-         (make-instance
-          'polygon-object
-          :id id
-          :name name
-          :type type
-          :x x
-          :y y
-          :rotation (or rotation 0.0)
-          :visible visible
-          :vertices
-          (mapcar
-           (lambda (tpoint)
-             (cons (tpoint-x tpoint)
-                   (tpoint-y tpoint)))
-           points))))
+       (make-instance
+        'polygon-object
+        :id id
+        :name name
+        :type type
+        :x x
+        :y y
+        :rotation (or rotation 0.0)
+        :visible visible
+        :vertices
+        (mapcar
+         (lambda (tpoint)
+           (cons (tpoint-x tpoint)
+                 (tpoint-y tpoint)))
+         (tpolygon-points polygon))))
       (polyline
-       (with-slots (points)
-           polyline
-         (make-instance
-          'polyline-object
-          :id id
-          :name name
-          :type type
-          :x x
-          :y y
-          :rotation (or rotation 0.0)
-          :visible visible
-          :points (mapcar
-                   (lambda (tpoint)
-                     (cons (tpoint-x tpoint)
-                           (tpoint-y tpoint)))
-                   points))))
+       (make-instance
+        'polyline-object
+        :id id
+        :name name
+        :type type
+        :x x
+        :y y
+        :rotation (or rotation 0.0)
+        :visible visible
+        :points (mapcar
+                 (lambda (tpoint)
+                   (cons (tpoint-x tpoint)
+                         (tpoint-y tpoint)))
+                 (tpolyline-points polyline))))
       (text
-       (with-slots (text font-family pixel-size wrap color
-                         bold italic underline strikeout kerning
-                         halign valign)
-           text
-         (make-instance
-          'text-object
-          :id id
-          :name name
-          :type type
-          :x x
-          :y y
-          :rotation (or rotation 0.0)
-          :visible visible
-          :string (or text "")
-          :font-family (or font-family "sans-serif")
-          :pixel-size (or pixel-size 16)
-          :wrap wrap
-          :color (or color +black+)
-          :bold bold
-          :italic italic
-          :underline underline
-          :strikeout strikeout
-          :kerning kerning
-          :halign (or halign :left)
-          :valign (or valign :top)
-          :properties properties)))
+       (make-instance
+        'text-object
+        :id id
+        :name name
+        :type type
+        :x x
+        :y y
+        :rotation (or rotation 0.0)
+        :visible visible
+        :string (ttext-text text)
+        :font-family (or (ttext-font-family text) "sans-serif")
+        :pixel-size (or (ttext-pixel-size text) 16)
+        :wrap (ttext-wrap text)
+        :color (or (ttext-color text) +black+)
+        :bold (ttext-bold text)
+        :italic (ttext-italic text)
+        :underline (ttext-underline text)
+        :strikeout (ttext-strikeout text)
+        :kerning (ttext-kerning text)
+        :halign (or (ttext-halign text) :left)
+        :valign (or (ttext-valign text) :top)
+        :properties properties))
       (gid
        (make-instance
         'tile-object
@@ -903,53 +898,45 @@ These coordinates are relative to the x and y of the object"
    objects))
 
 (defun %load-image-layer (tlayer map parent)
-  (with-slots (name opacity visible width height offset-x
-                    offset-y image properties)
-      tlayer
-    (make-instance
-     'image-layer
-     :map map
-     :parent parent
-     :name name
-     :opacity opacity
-     :visible visible
-     :offset-x offset-x
-     :offset-y offset-y
-     :image (%load-image image)
-     :properties properties)))
+  (make-instance
+   'image-layer
+   :map map
+   :parent parent
+   :name (timage-layer-name tlayer)
+   :opacity (timage-layer-opacity tlayer)
+   :visible (timage-layer-visible tlayer)
+   :offset-x (timage-layer-offset-x tlayer)
+   :offset-y (timage-layer-offset-y tlayer)
+   :image (%load-image (timage-layer-image tlayer))
+   :properties (timage-layer-properties tlayer)))
 
 (defun %load-layer-group (tlayer map parent)
-  (with-slots (name offset-x offset-y opacity visible
-                    layers properties)
-      tlayer
-    (let ((ret
-           (make-instance
-            'group-layer
-            :map map
-            :parent parent
-            :name name
-            :opacity opacity
-            :visible visible
-            :offset-x offset-x
-            :offset-y offset-y
-            :properties properties)))
-      (setf (slot-value ret 'layers)
-            (mapcar
-             (lambda (l)
-               (etypecase l
-                 (ttile-layer (%load-tile-layer l map ret))
-                 (tobject-group (%load-object-layer l map ret))
-                 (timage-layer (%load-image-layer l map ret))
-                 (tlayer-group (%load-layer-group l map ret))))
-             layers))
-      ret)))
+  (let ((ret
+          (make-instance
+           'group-layer
+           :map map
+           :parent parent
+           :name (tlayer-group-name tlayer)
+           :opacity (tlayer-group-opacity tlayer)
+           :visible (tlayer-group-visible tlayer)
+           :offset-x (tlayer-group-offset-x tlayer)
+           :offset-y (tlayer-group-offset-y tlayer)
+           :properties (tlayer-group-properties tlayer))))
+    (setf (slot-value ret 'layers)
+          (mapcar
+           (lambda (l)
+             (etypecase l
+               (ttile-layer (%load-tile-layer l map ret))
+               (tobject-group (%load-object-layer l map ret))
+               (timage-layer (%load-image-layer l map ret))
+               (tlayer-group (%load-layer-group l map ret))))
+           (tlayer-group-layers tlayer)))
+    ret))
 
 (defun %load-tileset (ttileset)
-  (with-slots (source first-gid)
-      ttileset
-    (if source
-        (%load-external-tileset source first-gid)
-        (%load-embedded-tileset ttileset))))
+  (if-let ((source (ttileset-source ttileset)))
+      (%load-external-tileset source (ttileset-first-gid ttileset))
+      (%load-embedded-tileset ttileset)))
 
 (defun %load-external-tileset (path first-gid
                      &aux
@@ -960,80 +947,71 @@ These coordinates are relative to the x and y of the object"
                            (parse-xml-tileset-file full-path))
                           ("json"
                            (parse-json-tileset-file full-path)))))
-  (with-slots (name tile-width tile-height columns
-                    spacing margin tile-count tile-offset-x tile-offset-y
-                    (timage image) (ttiles tiles) (tterrains terrains))
-      ttileset
-    (uiop:with-current-directory ((uiop:pathname-directory-pathname full-path))
-      (let* ((image (%load-image timage))
-             (tiles (%load-tiles ttiles))
-             (terrains (%load-terrains tterrains tiles))
-             (ret
-              (make-instance
-               'external-tileset
-               :source full-path
-               :name name
-               :first-gid first-gid
-               :tile-width tile-width
-               :tile-height tile-height
-               :spacing spacing
-               :margin margin
-               :tile-count tile-count
-               :columns columns
-               :offset-x tile-offset-x
-               :offset-y tile-offset-y
-               :image image
-               :terrains terrains)))
-        (%finalize-tiles tiles ttiles ret)
-        (setf (slot-value ret 'tiles) tiles)
-        ret))))
+  (uiop:with-current-directory ((uiop:pathname-directory-pathname full-path))
+    (let* ((image (%load-image (ttileset-image ttileset)))
+           (tiles (%load-tiles (ttileset-tiles ttileset)))
+           (terrains (%load-terrains (ttileset-terrains ttileset) tiles))
+           (ret
+             (make-instance
+              'external-tileset
+              :source full-path
+              :name (ttileset-name ttileset)
+              :first-gid first-gid
+              :tile-width (ttileset-tile-width ttileset)
+              :tile-height (ttileset-tile-height ttileset)
+              :spacing (ttileset-spacing ttileset)
+              :margin (ttileset-margin ttileset)
+              :tile-count (ttileset-tile-count ttileset)
+              :columns (ttileset-columns ttileset)
+              :offset-x (ttileset-tile-offset-x ttileset)
+              :offset-y (ttileset-tile-offset-y ttileset)
+              :image image
+              :terrains terrains)))
+      (%finalize-tiles tiles (ttileset-tiles ttileset) ret)
+      (setf (slot-value ret 'tiles) tiles)
+      ret)))
 
 (defun %load-embedded-tileset (ttileset)
-  (with-slots (name first-gid tile-width tile-height columns
-                    spacing margin tile-count tile-offset-x tile-offset-y
-                    (timage image) (ttiles tiles) (tterrains terrains))
-      ttileset
-      (let* ((image (%load-image timage))
-             (tiles (%load-tiles ttiles))
-             (terrains (%load-terrains tterrains tiles))
-             (tileset
-              (make-instance
-               'embedded-tileset
-               :name name
-               :first-gid first-gid
-               :tile-width tile-width
-               :tile-height tile-height
-               :spacing spacing
-               :margin margin
-               :tile-count tile-count
-               :columns columns
-               :offset-x tile-offset-x
-               :offset-y tile-offset-y
-               :image image
-               :tiles tiles
-               :terrains terrains)))
-        (%finalize-tiles tiles ttiles tileset)
-        tileset)))
+  (let* ((image (%load-image (ttileset-image ttileset)))
+         (tiles (%load-tiles (ttileset-tiles ttileset)))
+         (terrains (%load-terrains (ttileset-terrains ttileset) tiles))
+         (tileset
+           (make-instance
+            'embedded-tileset
+            :name (ttileset-name ttileset)
+            :first-gid (ttileset-first-gid ttileset)
+            :tile-width (ttileset-tile-width ttileset)
+            :tile-height (ttileset-tile-height ttileset)
+            :spacing (ttileset-spacing ttileset)
+            :margin (ttileset-margin ttileset)
+            :tile-count (ttileset-tile-count ttileset)
+            :columns (ttileset-columns ttileset)
+            :offset-x (ttileset-tile-offset-x ttileset)
+            :offset-y (ttileset-tile-offset-y ttileset)
+            :image image
+            :tiles tiles
+            :terrains terrains)))
+    (%finalize-tiles tiles (ttileset-tiles ttileset) tileset)
+    tileset))
 
 (defun %load-image (timage)
-  (if timage
-      (with-slots (source width height transparent-color format image-data)
-          timage
-        (if source
-            (make-instance
-             'external-tiled-image
-             :source (uiop:merge-pathnames* source)
-             :transparent-color (or transparent-color +transparent+)
-             :width (or width 0)
-             :height (or height 0))
-            (make-instance
-             'embedded-tiled-image
-             :format format
-             :data image-data
-             :transparent-color (or transparent-color +transparent+)
-             :width (or width 0)
-             :height (or height 0))))
-      nil))
+  (when timage
+    (cond
+      ((timage-source timage)
+       (make-instance
+        'external-tiled-image
+        :source (uiop:merge-pathnames* (timage-source timage))
+        :transparent-color (or (timage-transparent-color timage) +transparent+)
+        :width (or (timage-width timage) 0)
+        :height (or (timage-height timage) 0)))
+      (t
+       (make-instance
+         'embedded-tiled-image
+         :format (timage-format timage)
+         :data (timage-image-data timage)
+         :transparent-color (or (timage-transparent-color timage) +transparent+)
+         :width (or (timage-width timage) 0)
+         :height (or (timage-height timage) 0))))))
 
 (defun %load-tiles (ttiles)
   ;; It can happen that the tiles other than the first frame for an animated
@@ -1045,53 +1023,49 @@ These coordinates are relative to the x and y of the object"
     (nconc
      (mapcar
       (lambda (tile)
-        (with-slots (id type probability frames properties)
-            tile
-            (if frames
-              (progn
-               ;; Go through the other tiles and add them if they are not
-               ;; found.
-               (dolist (tframe (ttileset-tile-frames tile))
-                 (with-slots (duration tile-id)
-                   tframe
-                   (let ((tl1 (find tile-id ttiles
-                                    :key #'(lambda (til) (slot-value til 'id))))
-                         (tl2 (find tile-id other-frame-tids)))
-                     (unless (or tl1 tl2)
-                       (push (make-instance 'tiled-tileset-tile
-                                            :id tile-id
-                                            :type ""
-                                            :probability nil)
-                             other-frame-tiles)
-                       (push tile-id other-frame-tids)
-                       (push (make-ttileset-tile :id tile-id)
-                             other-frame-ttiles)))))
-               (make-instance
-                'animated-tile
-                :id id
-                :type type
-                :probability probability
-                :properties properties))
-              (make-instance
-               'tiled-tileset-tile
-               :id id
-               :type type
-               :probability probability
-               :properties properties))))
+        (cond
+          ((ttileset-tile-frames tile)
+           ;; Go through the other tiles and add them if they are not
+           ;; found.
+           (dolist (tframe (ttileset-tile-frames tile))
+             (let* ((tile-id (tframe-tile-id tframe))
+                    (tl1 (find tile-id ttiles
+                              :key #'(lambda (til) (slot-value til 'id))))
+                    (tl2 (find tile-id other-frame-tids)))
+               (unless (or tl1 tl2)
+                 (push (make-instance 'tiled-tileset-tile
+                                      :id tile-id
+                                      :type ""
+                                      :probability nil)
+                       other-frame-tiles)
+                 (push tile-id other-frame-tids)
+                 (push (make-ttileset-tile :id tile-id)
+                       other-frame-ttiles))))
+           (make-instance
+            'animated-tile
+            :id (ttileset-tile-id tile)
+            :type (ttileset-tile-type tile)
+            :probability (ttileset-tile-probability tile)
+            :properties (ttileset-tile-properties tile)))
+          (t
+           (make-instance
+            'tiled-tileset-tile
+            :id (ttileset-tile-id tile)
+            :type (ttileset-tile-type tile)
+            :probability (ttileset-tile-probability tile)
+            :properties (ttileset-tile-properties tile)))))
       ttiles)
      (progn (nconc ttiles other-frame-ttiles)
             other-frame-tiles))))
 
 (defun %load-terrains (tterrains tiles)
   (mapcar
-   (lambda (terrain)
-     (with-slots (name tile properties)
-         terrain
-       (make-instance
-        'tiled-terrain
-        :name name
-        :tile (find tile tiles :key #'tile-id)
-        :properties properties)))
+   (lambda (tterrain)
+     (make-instance
+      'tiled-terrain
+      :name (tterrain-name tterrain)
+      :tile (find (tterrain-tile tterrain) tiles :key #'tile-id)
+      :properties (tterrain-properties tterrain)))
    tterrains))
 
 (defun %finalize-tiles (tiles ttiles tileset)
@@ -1119,10 +1093,8 @@ These coordinates are relative to the x and y of the object"
        (setf (slot-value tile 'frames)
              (mapcar
               (lambda (tframe)
-                (with-slots (duration tile-id)
-                    tframe
-                  (make-instance
-                   'tiled-frame
-                   :duration duration
-                   :tile (find tile-id tiles :key #'tile-id))))
+                (make-instance
+                 'tiled-frame
+                 :duration (tframe-duration tframe)
+                 :tile (find (tframe-tile-id tframe) tiles :key #'tile-id)))
               (ttileset-tile-frames ttile))))))
