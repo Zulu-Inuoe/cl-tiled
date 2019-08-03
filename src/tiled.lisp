@@ -482,14 +482,6 @@ These coordinates are relative to the x and y of the object"
     :initarg :tile
     :reader object-tile)))
 
-(deftype horizontal-alignment ()
-  "Horizontal alignment of text"
-  '(member :left :center :right))
-
-(deftype vertical-alignment ()
-  "Vertical alignment of text"
-  '(member :top :center :bottom))
-
 (defclass text-object (object)
   ((string
     :documentation "The string of text"
@@ -559,12 +551,6 @@ These coordinates are relative to the x and y of the object"
     :initarg :image
     :reader object-image)))
 
-(deftype draw-order ()
-  "Draw order for objects in an `object-group'.
-  top-down - sorted by y coordinate
-  index - manual stacking, meaning drawn in defined order"
-  '(member :top-down :index))
-
 (defclass object-layer (layer object-group)
   ())
 
@@ -581,23 +567,6 @@ These coordinates are relative to the x and y of the object"
     :type list
     :initarg :layers
     :reader group-layers)))
-
-(deftype orientation ()
-  "Orientation of the map"
-  '(member :orthogonal :isometric :staggered :hexagonal))
-
-(deftype render-order ()
-  '(member :right-down :right-up :left-down :left-up))
-
-(deftype stagger-axis ()
-  "Which axis is staggered.
-Only used by the staggered, and hexagonal maps"
-  '(member :x :y))
-
-(deftype stagger-index ()
-  "Whether the odd or even rows/columns are shifted.
-Only used by the staggered and hexagonal maps."
-  '(member :odd :even))
 
 (defclass tiled-map (properties-mixin)
   ((version

@@ -140,10 +140,12 @@
 (defstruct tpolyline
   (points () :type list))
 
-(deftype halign ()
+(deftype horizontal-alignment ()
+  "Horizontal alignment of text"
   '(member :left :center :right))
 
-(deftype valign ()
+(deftype vertical-alignment ()
+  "Vertical alignment of text"
   '(member :top :center :bottom))
 
 (defstruct ttext
@@ -157,8 +159,8 @@
   (underline nil :type boolean)
   (strikeout nil :type boolean)
   (kerning t :type boolean)
-  (halign nil :type (or null halign))
-  (valign nil :type (or null valign)))
+  (halign nil :type (or null horizontal-alignment))
+  (valign nil :type (or null vertical-alignment)))
 
 (defstruct tobject
   (id 0 :type integer)
@@ -178,8 +180,11 @@
   (text nil :type (or null ttext))
   (image nil :type (or null timage)))
 
-(deftype tdraw-order ()
-  '(member :index :topdown))
+(deftype draw-order ()
+  "Draw order for objects in an `object-group'.
+  top-down - sorted by y coordinate
+  index - manual stacking, meaning drawn in defined order"
+  '(member :top-down :index))
 
 (defstruct tobject-group
   (name "" :type string)
@@ -192,7 +197,7 @@
   (visible t :type boolean)
   (offset-x 0 :type integer)
   (offset-y 0 :type integer)
-  (draw-order nil :type (or null tdraw-order))
+  (draw-order nil :type (or null draw-order))
   (properties () :type list)
   (objects () :type list))
 
@@ -270,30 +275,35 @@
   (properties () :type list)
   (layers () :type list))
 
-(deftype torientation ()
+(deftype orientation ()
+  "Orientation of the map"
   '(member :orthogonal :isometric :staggered :hexagonal))
 
-(deftype trender-order ()
+(deftype render-order ()
   '(member :right-down :right-up :left-down :left-up))
 
-(deftype tstagger-axis ()
+(deftype stagger-axis ()
+  "Which axis is staggered.
+Only used by the staggered, and hexagonal maps"
   '(member :x :y))
 
-(deftype tstagger-index ()
-  '(member :even :odd))
+(deftype stagger-index ()
+  "Whether the odd or even rows/columns are shifted.
+Only used by the staggered and hexagonal maps."
+  '(member :odd :even))
 
 (defstruct tmap
   (version "" :type (or null string))
   (tiled-version "" :type (or null string))
-  (orientation :orthogonal :type (or null torientation))
-  (render-order nil :type (or null trender-order))
+  (orientation :orthogonal :type (or null orientation))
+  (render-order nil :type (or null render-order))
   (width 0 :type integer)
   (height 0 :type integer)
   (tile-width 0 :type integer)
   (tile-height 0 :type integer)
   (hex-side-length nil :type (or null integer))
-  (stagger-axis nil :type (or null tstagger-axis))
-  (stagger-index nil :type (or null tstagger-index))
+  (stagger-axis nil :type (or null stagger-axis))
+  (stagger-index nil :type (or null stagger-index))
   (background-color nil :type (or null tiled-color))
   (next-object-id 0 :type integer)
   (properties () :type list)
