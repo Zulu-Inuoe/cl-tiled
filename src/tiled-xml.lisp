@@ -126,9 +126,9 @@
       nil))
 
 (defun %parse-xml-point (point)
-  (make-tpoint
-   :x (xml-attr-int point "x" 0)
-   :y (xml-attr-int point "y" 0)))
+  (cons
+   (xml-attr-int point "x" 0)
+   (xml-attr-int point "y" 0)))
 
 (defun %parse-xml-polygon (polygon)
   (if polygon
@@ -137,9 +137,9 @@
                 (lambda (pair)
                   (destructuring-bind (x y)
                       (split-sequence:split-sequence #\, pair)
-                    (make-tpoint
-                     :x (parse-float:parse-float x :junk-allowed t)
-                     :y (parse-float:parse-float y :junk-allowed t))))
+                    (cons
+                     (parse-float:parse-float x :junk-allowed t)
+                     (parse-float:parse-float y :junk-allowed t))))
                 (split-sequence:split-sequence #\SPACE (xml-attr polygon "points"))))
       nil))
 
@@ -150,9 +150,9 @@
                 (lambda (pair)
                   (destructuring-bind (x y)
                       (split-sequence:split-sequence #\, pair)
-                    (make-tpoint
-                     :x (parse-float:parse-float x :junk-allowed t)
-                     :y (parse-float:parse-float y :junk-allowed t))))
+                    (cons
+                     (parse-float:parse-float x :junk-allowed t)
+                     (parse-float:parse-float y :junk-allowed t))))
                 (split-sequence:split-sequence #\SPACE (xml-attr polyline "points"))))
       nil))
 

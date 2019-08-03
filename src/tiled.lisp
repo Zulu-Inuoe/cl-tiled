@@ -802,12 +802,7 @@ These coordinates are relative to the x and y of the object"
         :y y
         :rotation (or rotation 0.0)
         :visible visible
-        :vertices
-        (mapcar
-         (lambda (tpoint)
-           (cons (tpoint-x tpoint)
-                 (tpoint-y tpoint)))
-         (tpolygon-points polygon))))
+        :vertices (tpolygon-points polygon)))
       (polyline
        (make-instance
         'polyline-object
@@ -818,11 +813,7 @@ These coordinates are relative to the x and y of the object"
         :y y
         :rotation (or rotation 0.0)
         :visible visible
-        :points (mapcar
-                 (lambda (tpoint)
-                   (cons (tpoint-x tpoint)
-                         (tpoint-y tpoint)))
-                 (tpolyline-points polyline))))
+        :points (tpolyline-points polyline)))
       (text
        (make-instance
         'text-object

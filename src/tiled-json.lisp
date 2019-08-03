@@ -105,9 +105,9 @@
       nil))
 
 (defun %parse-json-point (point)
-  (make-tpoint
-   :x (json-attr-int point :x 0)
-   :y (json-attr-int point :y 0)))
+  (cons
+   (json-attr-int point :x 0)
+   (json-attr-int point :y 0)))
 
 (defun %parse-json-polygon (polygon-points)
   (if polygon-points

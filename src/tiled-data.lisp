@@ -69,11 +69,6 @@
    #:tellipse
    #:make-tellipse
 
-   #:tpoint
-   #:tpoint-x
-   #:tpoint-y
-   #:make-tpoint
-
    #:tpolygon
    #:tpolygon-points
    #:make-tpolygon
@@ -364,10 +359,6 @@
   (properties () :type list))
 
 (defstruct tellipse)
-
-(defstruct tpoint
-  (x 0 :type real)
-  (y 0 :type real))
 
 (defstruct tpolygon
   (points () :type list))
