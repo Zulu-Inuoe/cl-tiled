@@ -708,7 +708,7 @@ These coordinates are relative to the x and y of the object"
            :visible (tobject-group-visible tgroup)
            :offset-x (tobject-group-offset-x tgroup)
            :offset-y (tobject-group-offset-y tgroup)
-           :draw-order (tobject-group-draw-order tgroup)
+           :draw-order (or (tobject-group-draw-order tgroup) :top-down)
            :objects (%load-objects (tobject-group-objects tgroup))
            :properties (tobject-group-properties tgroup))))
     (%finalize-object-layer ret (tobject-group-objects tgroup) tilesets)
@@ -1011,7 +1011,7 @@ These coordinates are relative to the x and y of the object"
        (setf (slot-value tile 'object-group)
              (make-instance
               'object-group
-              :draw-order (tobject-group-draw-order tgroup)
+              :draw-order (or (tobject-group-draw-order tgroup) :top-down)
               :objects (%load-objects (tobject-group-objects tgroup)))))
 
      (when (typep tile 'animated-tile)
