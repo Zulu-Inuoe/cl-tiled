@@ -148,6 +148,10 @@
 
    #:tile-object
    #:object-tile
+   #:object-tile
+   #:object-flipped-anti-diagonal
+   #:object-flipped-horizontal
+   #:object-flipped-vertical
 
    #:horizontal-alignment
    #:vertical-alignment
@@ -413,7 +417,10 @@
         :y y
         :rotation (or rotation 0.0)
         :properties properties
-        :visible visible))
+        :visible visible
+        :flipped-anti-diagonal (logbitp 29 gid)
+        :flipped-vertical (logbitp 30 gid)
+        :flipped-horizontal (logbitp 31 gid)))
       (image
        (make-instance
         'image-object
@@ -443,7 +450,8 @@
 (defun %finalize-object (object tobject tilesets)
   (when (typep object 'tile-object)
     (setf (slot-value object 'tile)
-          (%find-tile (tobject-gid tobject) tilesets))))
+          (or (%find-tile (mask-field (byte 29 0)) (tobject-gid tobject) tilesets)
+              (break)))))
 
 (defun %load-objects (tobjects)
   (mapcar #'%load-object tobjects))

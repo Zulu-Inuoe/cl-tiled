@@ -141,6 +141,9 @@
 
    #:tile-object
    #:object-tile
+   #:object-flipped-anti-diagonal
+   #:object-flipped-horizontal
+   #:object-flipped-vertical
 
    #:horizontal-alignment
    #:vertical-alignment
@@ -745,7 +748,22 @@ These coordinates are relative to the x and y of the object"
     :documentation "The tile used by this object."
     :type tiled-tile
     :initarg :tile
-    :reader object-tile)))
+    :reader object-tile)
+   (flipped-anti-diagonal
+    :documentation "The tile is flipped anti-diagonally"
+    :type boolean
+    :initarg :flipped-anti-diagonal
+    :reader object-flipped-anti-diagonal)
+   (flipped-horizontal
+    :documentation "The tile is flipped horizontally"
+    :type boolean
+    :initarg :flipped-horizontal
+    :reader object-flipped-horizontal)
+   (flipped-vertical
+    :documentation "The tile is flipped vertically"
+    :type boolean
+    :initarg :flipped-vertical
+    :reader object-flipped-vertical)))
 
 (deftype horizontal-alignment ()
   "Horizontal alignment of text"
