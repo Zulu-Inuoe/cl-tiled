@@ -6,7 +6,9 @@
    #:cl-tiled.impl)
   (:export
    #:parse-json-map-file
-   #:parse-json-tileset-file))
+   #:parse-json-tileset-file
+   #:parse-json-map-stream
+   #:parse-json-tileset-stream))
 
 (in-package #:cl-tiled.impl.json)
 
@@ -285,20 +287,24 @@
 (defun ident-handler (str)
   str)
 
-(defun parse-json-map-file (path)
+(defun for-json-tree-from-stream (stream current-directory processor)
   (let ((tree (let ((cl-json:*json-identifier-name-to-lisp* #'ident-handler)
                     (cl-json:*boolean-handler* #'bool-handler)
                     (cl-json:*json-array-type* 'cl:vector))
-                (with-open-file (stream path)
-                  (cl-json:decode-json stream)))))
-    (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
-      (%parse-json-map tree))))
+                (cl-json:decode-json stream))))
+    (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
+      (funcall processor tree))))
+
+(defun parse-json-map-file (path)
+  (with-open-file (stream path)
+    (for-json-tree-from-stream stream path #'%parse-json-map)))
 
 (defun parse-json-tileset-file (path)
-  (let ((tree (let ((cl-json:*json-identifier-name-to-lisp* #'ident-handler)
-                    (cl-json:*boolean-handler* #'bool-handler)
-                    (cl-json:*json-array-type* 'cl:vector))
-                (with-open-file (stream path)
-                  (cl-json:decode-json stream)))))
-    (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
-      (%parse-json-tileset tree))))
+  (with-open-file (stream path)
+    (for-json-tree-from-stream stream path #'%parse-json-tileset)))
+
+(defun parse-json-map-stream (stream current-directory)
+  (for-json-tree-from-stream stream current-directory #'%parse-json-map))
+
+(defun parse-json-tileset-stream (stream current-directory)
+  (for-json-tree-from-stream stream current-directory #'%parse-json-tileset))
