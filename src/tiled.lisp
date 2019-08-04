@@ -450,7 +450,7 @@
 (defun %finalize-object (object tobject tilesets)
   (when (typep object 'tile-object)
     (setf (slot-value object 'tile)
-          (or (%find-tile (mask-field (byte 29 0)) (tobject-gid tobject) tilesets)
+          (or (%find-tile (mask-field (byte 29 0) (tobject-gid tobject)) tilesets)
               (break)))))
 
 (defun %load-objects (tobjects)
