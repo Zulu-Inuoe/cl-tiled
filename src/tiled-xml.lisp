@@ -6,7 +6,9 @@
    #:cl-tiled.impl)
   (:export
    #:parse-xml-map-file
-   #:parse-xml-tileset-file))
+   #:parse-xml-tileset-file
+   #:parse-xml-map-stream
+   #:parse-xml-tileset-stream))
 
 (in-package #:cl-tiled.impl.xml)
 
@@ -356,14 +358,17 @@
    :tilesets (mapcar #'%parse-xml-tileset (xml-children map "tileset"))
    :layers (%parse-xml-map-layers map)))
 
-(defun %slurp-file (path)
+(defun %slurp-stream (stream)
   (with-output-to-string (str)
-    (with-open-file (stream path)
-      (loop
-         :for line := (read-line stream nil nil)
-         :while line
-         :doing
-         (write-line (string-right-trim '(#\return) line) str)))))
+    (loop
+      :for line := (read-line stream nil nil)
+      :while line
+      :doing
+         (write-line (string-right-trim '(#\return) line) str))))
+
+(defun %slurp-file (path)
+  (with-open-file (stream path)
+    (%slurp-stream stream)))
 
 (defun parse-xml-map-file (path)
   (let ((tree (xmls:parse (%slurp-file path))))
@@ -373,4 +378,14 @@
 (defun parse-xml-tileset-file (path)
   (let ((tree (xmls:parse (%slurp-file path))))
     (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
+      (%parse-xml-tileset tree))))
+
+(defun parse-xml-map-stream (stream current-directory)
+  (let ((tree (xmls:parse (%slurp-stream stream))))
+    (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
+      (%parse-xml-map tree))))
+
+(defun parse-xml-tileset-stream (stream current-directory)
+  (let ((tree (xmls:parse (%slurp-stream stream))))
+    (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
       (%parse-xml-tileset tree))))

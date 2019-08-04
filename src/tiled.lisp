@@ -208,17 +208,13 @@
 
 (in-package #:cl-tiled)
 
-(defun load-map (path
-                 &aux
-                   (tmap
-                    (eswitch ((pathname-type path) :test 'string-equal)
-                      ("tmx"
-                       (parse-xml-map-file path))
-                      ("json"
-                       (parse-json-map-file path)))))
+
+(defun %load-map (tmap path resource-loader)
   (let* ((loaded-tilesets
            (uiop:with-pathname-defaults ((uiop:pathname-directory-pathname path))
-             (mapcar #'%load-tileset (tmap-tilesets tmap))))
+             (flet ((%%load-tileset (tileset)
+                      (%load-tileset tileset resource-loader)))
+               (mapcar #'%%load-tileset (tmap-tilesets tmap)))))
          (ret
            (make-instance
             'tiled-map
@@ -245,8 +241,25 @@
     (setf (slot-value ret 'layers) loaded-layers)
     ret))
 
+
+(defun file-resource-loader (path)
+  (alexandria:read-file-into-string path))
+
+
+(defun load-map (path &optional (resource-loader #'file-resource-loader)
+                  &aux
+                  (tmap
+                   (eswitch ((pathname-type path) :test 'string-equal)
+                     ("tmx"
+                      (with-input-from-string (stream (funcall resource-loader path))
+                        (parse-xml-map-stream stream path)))
+                     ("json"
+                      (with-input-from-string (stream (funcall resource-loader path))
+                        (parse-json-map-stream stream path))))))
+  (%load-map tmap path resource-loader))
+
 (defun load-tileset (path)
-  (%load-external-tileset path 0))
+  (%load-external-tileset path 0 #'file-resource-loader))
 
 (defun %find-tile (tgid tilesets)
   (loop
@@ -477,20 +490,23 @@
            (tlayer-group-layers tlayer)))
     ret))
 
-(defun %load-tileset (ttileset)
+(defun %load-tileset (ttileset resource-loader)
   (if-let ((source (ttileset-source ttileset)))
-      (%load-external-tileset source (ttileset-first-gid ttileset))
+      (%load-external-tileset source (ttileset-first-gid ttileset) resource-loader)
       (%load-embedded-tileset ttileset)))
 
-(defun %load-external-tileset (path first-gid
-                               &aux
-                                 (full-path (uiop:ensure-absolute-pathname path *default-pathname-defaults*))
-                                 (ttileset
-                                  (eswitch ((pathname-type full-path) :test 'string-equal)
-                                    ("tsx"
-                                     (parse-xml-tileset-file full-path))
-                                    ("json"
-                                     (parse-json-tileset-file full-path)))))
+(defun %load-external-tileset (path first-gid resource-loader
+                                &aux
+                                (full-path (uiop:ensure-absolute-pathname path *default-pathname-defaults*))
+                                (data (funcall resource-loader full-path))
+                                (ttileset
+                                 (eswitch ((pathname-type full-path) :test 'string-equal)
+                                   ("tsx"
+                                    (with-input-from-string (stream data)
+                                      (parse-xml-tileset-stream stream full-path)))
+                                   ("json"
+                                    (with-input-from-string (stream data)
+                                      (parse-json-tileset-stream stream full-path))))))
   (let* ((tiles (%load-tiles (ttileset-tiles ttileset)))
          (terrains (%load-terrains (ttileset-terrains ttileset) tiles))
          (ret
