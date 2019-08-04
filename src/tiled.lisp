@@ -355,8 +355,8 @@
         :y y
         :rotation (or rotation 0.0)
         :visible visible
-        :rx width
-        :ry height
+        :rx (/ width 2)
+        :ry (/ height 2)
         :properties properties))
       (polygon
        (make-instance
