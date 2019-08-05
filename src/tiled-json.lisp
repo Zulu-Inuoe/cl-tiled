@@ -71,7 +71,7 @@
 (defun %parse-json-image (image)
   (when image
     (make-instance 'external-tiled-image
-                   :source image
+                   :source (uiop:ensure-absolute-pathname image *default-pathname-defaults*)
                    :transparent-color +transparent+
                    :width 0 :height 0)))
 
