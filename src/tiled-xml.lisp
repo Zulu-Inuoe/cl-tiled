@@ -85,11 +85,11 @@
     (let ((transparent-color (or (xml-attr-color image "trans") +transparent+))
           (width (or (xml-attr-int image "width") 0))
           (height (or (xml-attr-int image "height") 0))
-          (source (uiop:ensure-absolute-pathname (xml-attr image "source") *default-pathname-defaults*)))
+          (source (xml-attr image "source")))
       (cond
         (source
          (make-instance 'external-tiled-image
-                        :source source
+                        :source (uiop:ensure-absolute-pathname source *default-pathname-defaults*)
                         :transparent-color transparent-color
                         :width width :height height))
         (t
