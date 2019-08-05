@@ -141,6 +141,8 @@
 
    #:tile-object
    #:object-tile
+   #:object-height
+   #:object-width
    #:object-flipped-anti-diagonal
    #:object-flipped-horizontal
    #:object-flipped-vertical
@@ -749,6 +751,16 @@ These coordinates are relative to the x and y of the object"
     :type tiled-tile
     :initarg :tile
     :reader object-tile)
+   (width
+    :documentation "The width of the object, in pixels."
+    :type integer
+    :initarg :width
+    :reader object-width)
+   (height
+    :documentation "The height of the object, in pixels"
+    :type integer
+    :initarg :height
+    :reader object-height)
    (flipped-anti-diagonal
     :documentation "The tile is flipped anti-diagonally"
     :type boolean

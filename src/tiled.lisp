@@ -148,7 +148,8 @@
 
    #:tile-object
    #:object-tile
-   #:object-tile
+   #:object-width
+   #:object-height
    #:object-flipped-anti-diagonal
    #:object-flipped-horizontal
    #:object-flipped-vertical
@@ -415,6 +416,8 @@
         :type type
         :x x
         :y y
+        :width width
+        :height height
         :rotation (or rotation 0.0)
         :properties properties
         :visible visible
