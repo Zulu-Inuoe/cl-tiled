@@ -56,6 +56,8 @@
    #:tile-probability
    #:tile-object-group
 
+   #:tiled-tileset-image-tile
+
    #:tiled-frame
    #:frame-tile
    #:frame-duration
@@ -370,7 +372,13 @@
     :documentation "The local ID of this tile within its tileset"
     :type integer
     :initarg :id
-    :reader tile-id)))
+    :reader tile-id))
+  (:documentation
+   "A simple tile belonging to a tileset, with no individual properties."))
+
+(defgeneric tile-image (tile)
+  (:method ((tile tiled-tile))
+    (tileset-image (tile-tileset tile))))
 
 (defclass tiled-tileset-tile (properties-mixin tiled-tile)
   ((type
@@ -399,7 +407,16 @@ If nil, indicates no terrain at that corner."
     :initform nil
     :reader tile-object-group))
   (:documentation
-   "A tile."))
+   "A tile specified in a tilesheet, with additional properties."))
+
+(defclass tiled-tileset-image-tile (tiled-tileset-tile)
+  ((image
+    :documentation "The individualized image for this tile."
+    :type tiled-image
+    :initarg :image
+    :reader tile-image))
+  (:documentation
+   "A specified tilesheet with a dedicated image."))
 
 (defclass tiled-frame ()
   ((tile
@@ -417,10 +434,16 @@ If nil, indicates no terrain at that corner."
 The `tile' here refers to the image to be displayed on this particular frame."))
 
 (defun tile-column (tile)
-  (mod (tile-id tile) (tileset-columns (tile-tileset tile))))
+  (let ((tileset-columns (tileset-columns (tile-tileset tile))))
+    (if (zerop tileset-columns)
+        0
+        (mod (tile-id tile) tileset-columns))))
 
 (defun tile-row (tile)
-  (values (truncate (tile-id tile) (tileset-columns (tile-tileset tile)))))
+  (let ((tileset-columns (tileset-columns (tile-tileset tile))))
+    (if (zerop tileset-columns)
+        0
+        (values (truncate (tile-id tile) tileset-columns)))))
 
 (defun tile-pixel-x (tile
                           &aux
@@ -445,9 +468,6 @@ The `tile' here refers to the image to be displayed on this particular frame."))
 
 (defun tile-height (tile)
   (tileset-tile-height (tile-tileset tile)))
-
-(defun tile-image (tile)
-  (tileset-image (tile-tileset tile)))
 
 (defclass animated-tile (tiled-tileset-tile)
   ((frames

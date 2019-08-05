@@ -63,6 +63,8 @@
    #:tile-probability
    #:tile-object-group
 
+   #:tiled-tileset-image-tile
+
    #:tiled-frame
    #:frame-tile
    #:frame-duration
@@ -595,6 +597,14 @@
             :type (ttileset-tile-type tile)
             :probability (ttileset-tile-probability tile)
             :properties (ttileset-tile-properties tile)))
+          ((ttileset-tile-image tile)
+           (make-instance
+            'tiled-tileset-image-tile
+            :id (ttileset-tile-id tile)
+            :type (ttileset-tile-type tile)
+            :probability (ttileset-tile-probability tile)
+            :properties (ttileset-tile-properties tile)
+            :image (ttileset-tile-image tile)))
           (t
            (make-instance
             'tiled-tileset-tile
