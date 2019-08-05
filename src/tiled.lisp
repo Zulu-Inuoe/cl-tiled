@@ -269,7 +269,7 @@
   (loop
      :for tileset :in tilesets
      :for tlid := (- tgid (tileset-first-gid tileset))
-     :if (<= 0 tlid (1- (tileset-tile-count tileset)))
+     :if (<= 0 tlid (tileset-tile-count tileset))
        :return
        (let ((tile (find tlid (tileset-tiles tileset) :key #'tile-id)))
          (unless tile
