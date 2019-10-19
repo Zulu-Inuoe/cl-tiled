@@ -332,7 +332,13 @@
     ret))
 
 (defun %finalize-object-layer (object-layer tobjects tilesets)
-  (%finalize-objects (object-group-objects object-layer) tobjects tilesets))
+  (%finalize-objects (object-group-objects object-layer) tobjects tilesets)
+
+  ;; Sort by y coordinate when :top-down
+  (when (eq (object-group-draw-order object-layer) :top-down)
+    (with-slots (objects) object-layer
+      (setf objects (sort objects #'< :key #'object-y))))
+  (values))
 
 (defun %load-object (tobject)
   (let ((id (tobject-id tobject))
