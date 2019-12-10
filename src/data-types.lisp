@@ -393,7 +393,7 @@
 2 - bottom left
 3 - bottom right
 If nil, indicates no terrain at that corner."
-    :type (simple-vector 4)
+    :type (simple-array (or null tiled-terrain) 4)
     :initarg :terrains
     :reader tile-terrains)
    (probability
@@ -434,21 +434,25 @@ If nil, indicates no terrain at that corner."
 The `tile' here refers to the image to be displayed on this particular frame."))
 
 (defun tile-column (tile)
+  "Get the `column' of this tile in its tilset."
   (let ((tileset-columns (tileset-columns (tile-tileset tile))))
     (if (zerop tileset-columns)
         0
         (mod (tile-id tile) tileset-columns))))
 
 (defun tile-row (tile)
+  "Get the `row' of this tile in its tilset."
   (let ((tileset-columns (tileset-columns (tile-tileset tile))))
     (if (zerop tileset-columns)
         0
         (values (truncate (tile-id tile) tileset-columns)))))
 
 (defun tile-pixel-x (tile
-                          &aux
-                            (column (tile-column tile))
-                            (tileset (tile-tileset tile)))
+                     &aux
+                       (column (tile-column tile))
+                       (tileset (tile-tileset tile)))
+  "Get the pixel x coordinate of this `tile' in its tileset.
+ This indicates the left pixel in the tileset image."
   (+ (* column (tileset-tile-width tileset))
      (* column (tileset-spacing tileset))
      (tileset-offset-x tileset)
@@ -458,15 +462,19 @@ The `tile' here refers to the image to be displayed on this particular frame."))
                        &aux
                          (row (tile-row tile))
                          (tileset (tile-tileset tile)))
+  "Get the pixel y coordinate of this `tile' in its tileset.
+ This indicates the top pixel in the tileset image."
   (+ (* row (tileset-tile-height tileset))
      (* row (tileset-spacing tileset))
      (tileset-offset-y tileset)
      (tileset-margin tileset)))
 
 (defun tile-width (tile)
+  "Get the width of `tile', in pixels."
   (tileset-tile-width (tile-tileset tile)))
 
 (defun tile-height (tile)
+  "Get the height of `tile', in pixels."
   (tileset-tile-height (tile-tileset tile)))
 
 (defclass animated-tile (tiled-tileset-tile)

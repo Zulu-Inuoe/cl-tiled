@@ -215,7 +215,6 @@
 
 (in-package #:cl-tiled)
 
-
 (defun %load-map (tmap path resource-loader)
   (let* ((loaded-tilesets
            (uiop:with-pathname-defaults ((uiop:pathname-directory-pathname path))
@@ -640,12 +639,16 @@
      :for terrains-v := (ttileset-tile-terrain ttile)
      :for tgroup := (ttileset-tile-object-group ttile)
      :do
-     (setf (slot-value tile 'tileset) tileset)
-     (setf (slot-value tile 'terrains)
-           (vector (and (svref terrains-v 0) (elt terrains (svref terrains-v 0)))
-                   (and (svref terrains-v 1) (elt terrains (svref terrains-v 1)))
-                   (and (svref terrains-v 2) (elt terrains (svref terrains-v 2)))
-                   (and (svref terrains-v 3) (elt terrains (svref terrains-v 3)))))
+       (setf (slot-value tile 'tileset) tileset)
+       (setf (slot-value tile 'terrains)
+             (make-array 4 :element-type '(or null tiled-terrain)
+                         :initial-contents
+                         (flet ((get-terrain (idx)
+                                  (and idx (elt terrains idx))))
+                           (vector (get-terrain (aref terrains-v 0))
+                                   (get-terrain (aref terrains-v 1))
+                                   (get-terrain (aref terrains-v 2))
+                                   (get-terrain (aref terrains-v 3))))))
      (when tgroup
        (setf (slot-value tile 'object-group)
              (make-instance

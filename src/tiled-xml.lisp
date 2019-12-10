@@ -72,7 +72,6 @@
     (t
      (error "invalid encoding/compression: '~A'/'~A'" encoding compression))))
 
-
 (defun %parse-xml-image-data (image-data)
   (if image-data
     (let ((encoding (parse-image-encoding-string (xml-attr image-data "encoding")))

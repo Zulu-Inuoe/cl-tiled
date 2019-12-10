@@ -251,7 +251,7 @@
 (defstruct ttileset-tile
   (id 0 :type integer)
   (type "" :type string)
-  (terrain #(nil nil nil nil) :type (simple-vector 4))
+  (terrain #(nil nil nil nil) :type (simple-array (or null integer) (4)))
   (probability nil :type (or null real))
   (properties () :type list)
   (image nil :type (or null tiled-image))
