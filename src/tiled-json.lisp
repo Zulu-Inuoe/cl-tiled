@@ -9,8 +9,6 @@
    #:switch
    #:eswitch)
   (:export
-   #:parse-json-map-file
-   #:parse-json-tileset-file
    #:parse-json-map-stream
    #:parse-json-tileset-stream))
 
@@ -298,14 +296,6 @@
                 (cl-json:decode-json stream))))
     (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
       (funcall processor tree))))
-
-(defun parse-json-map-file (path)
-  (with-open-file (stream path)
-    (for-json-tree-from-stream stream path #'%parse-json-map)))
-
-(defun parse-json-tileset-file (path)
-  (with-open-file (stream path)
-    (for-json-tree-from-stream stream path #'%parse-json-tileset)))
 
 (defun parse-json-map-stream (stream current-directory)
   (for-json-tree-from-stream stream current-directory #'%parse-json-map))

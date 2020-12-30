@@ -10,8 +10,6 @@
   (:import-from
    #:xmls)
   (:export
-   #:parse-xml-map-file
-   #:parse-xml-tileset-file
    #:parse-xml-map-stream
    #:parse-xml-tileset-stream))
 
@@ -373,16 +371,6 @@
 (defun %slurp-file (path)
   (with-open-file (stream path)
     (%slurp-stream stream)))
-
-(defun parse-xml-map-file (path)
-  (let ((tree (xmls:parse (%slurp-file path))))
-    (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
-      (%parse-xml-map tree))))
-
-(defun parse-xml-tileset-file (path)
-  (let ((tree (xmls:parse (%slurp-file path))))
-    (uiop:with-current-directory ((uiop:pathname-directory-pathname path))
-      (%parse-xml-tileset tree))))
 
 (defun parse-xml-map-stream (stream current-directory)
   (let ((tree (xmls:parse (%slurp-stream stream))))
