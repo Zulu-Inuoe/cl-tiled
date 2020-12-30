@@ -8,6 +8,9 @@
    #:if-let
    #:switch)
   (:import-from
+   #:split-sequence
+   #:split-sequence)
+  (:import-from
    #:xmls)
   (:export
    #:parse-xml-map-stream
@@ -124,11 +127,11 @@
        :points (mapcar
                 (lambda (pair)
                   (destructuring-bind (x y)
-                      (split-sequence:split-sequence #\, pair)
+                      (split-sequence #\, pair)
                     (cons
                      (parse-integer x :junk-allowed t)
                      (parse-integer y :junk-allowed t))))
-                (split-sequence:split-sequence #\SPACE (xml-attr polygon "points"))))
+                (split-sequence #\SPACE (xml-attr polygon "points"))))
       nil))
 
 (defun %parse-xml-polyline (polyline)
@@ -137,11 +140,11 @@
        :points (mapcar
                 (lambda (pair)
                   (destructuring-bind (x y)
-                      (split-sequence:split-sequence #\, pair)
+                      (split-sequence #\, pair)
                     (cons
                      (parse-integer x :junk-allowed t)
                      (parse-integer y :junk-allowed t))))
-                (split-sequence:split-sequence #\SPACE (xml-attr polyline "points"))))
+                (split-sequence #\SPACE (xml-attr polyline "points"))))
       nil))
 
 (defun %parse-xml-text (text)
@@ -209,7 +212,7 @@
    :type (xml-attr tile "type" "")
    :terrain (destructuring-bind (&optional t1 t2 t3 t4)
                 (mapcar (lambda (v) (and v (parse-integer v :junk-allowed t)))
-                        (split-sequence:split-sequence #\, (xml-attr tile "terrain")))
+                        (split-sequence #\, (xml-attr tile "terrain")))
               (vector t1 t2 t3 t4))
    :probability (xml-attr-float tile "probability")
    :properties (%parse-xml-properties (xml-child tile "properties"))
@@ -253,7 +256,7 @@
     ('(nil . nil)
       (error "not implemented"))
     ('(:csv . nil)
-      (mapcar #'parse-integer (split-sequence:split-sequence #\, data)))
+      (mapcar #'parse-integer (split-sequence #\, data)))
     ('(:base64 . nil)
       (%collect-tiles-from-data (cl-base64:base64-string-to-usb8-array data)))
     ('(:base64 . :zlib)
