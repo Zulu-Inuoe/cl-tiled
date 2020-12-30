@@ -8,7 +8,8 @@
   (:import-from
    #:alexandria
    #:if-let
-   #:eswitch)
+   #:eswitch
+   #:read-file-into-string)
   (:import-from
    #:cl-tiled.data-types
    #:layers
@@ -250,11 +251,7 @@
     (setf (slot-value ret 'layers) loaded-layers)
     ret))
 
-(defun file-resource-loader (path)
-  (alexandria:read-file-into-string path))
-
-
-(defun load-map (path &optional (resource-loader #'file-resource-loader)
+(defun load-map (path &optional (resource-loader #'read-file-into-string)
                  &aux
                    (tmap
                     (eswitch ((pathname-type path) :test 'string-equal)
@@ -267,7 +264,7 @@
   (%load-map tmap path resource-loader))
 
 (defun load-tileset (path)
-  (%load-external-tileset path 0 #'file-resource-loader))
+  (%load-external-tileset path 0 #'read-file-into-string))
 
 (defun %find-tile (tgid tilesets)
   (loop
