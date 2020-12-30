@@ -1,7 +1,8 @@
 (defpackage #:cl-tiled.data-types
-  (:use
+  (:use #:cl)
+  (:import-from
    #:alexandria
-   #:cl)
+   #:required-argument)
   (:export
    #:tiled-color
    #:tiled-color-a
@@ -459,9 +460,9 @@ The `tile' here refers to the image to be displayed on this particular frame."))
      (tileset-margin tileset)))
 
 (defun tile-pixel-y (tile
-                       &aux
-                         (row (tile-row tile))
-                         (tileset (tile-tileset tile)))
+                     &aux
+                       (row (tile-row tile))
+                       (tileset (tile-tileset tile)))
   "Get the pixel y coordinate of this `tile' in its tileset.
  This indicates the top pixel in the tileset image."
   (+ (* row (tileset-tile-height tileset))
@@ -975,18 +976,18 @@ Only used by the staggered and hexagonal maps."
 
 (defun map-tile-layers (map)
   (loop :for layer :in (map-layers map)
-     :if (typep layer 'tile-layer)
-     :collect layer))
+        :if (typep layer 'tile-layer)
+          :collect layer))
 
 (defun map-object-layers (map)
   (loop :for layer :in (map-layers map)
-     :if (typep layer 'object-layer)
-     :collect layer))
+        :if (typep layer 'object-layer)
+          :collect layer))
 
 (defun map-image-layers (map)
   (loop :for layer :in (map-layers map)
-     :if (typep layer 'image-layer)
-     :collect layer))
+        :if (typep layer 'image-layer)
+          :collect layer))
 
 (defun map-width-pixels (map)
   (* (map-tile-width map)

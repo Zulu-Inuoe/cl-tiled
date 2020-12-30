@@ -1,9 +1,13 @@
 (defpackage #:cl-tiled.impl.json
   (:use
-   #:alexandria
    #:cl
    #:cl-tiled.data-types
    #:cl-tiled.impl)
+  (:import-from
+   #:alexandria
+   #:if-let
+   #:switch
+   #:eswitch)
   (:export
    #:parse-json-map-file
    #:parse-json-tileset-file

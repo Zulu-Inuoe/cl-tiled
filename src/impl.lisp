@@ -1,8 +1,10 @@
 (defpackage #:cl-tiled.impl
   (:use
-   #:alexandria
    #:cl
    #:cl-tiled.data-types)
+  (:import-from
+   #:alexandria
+   #:eswitch)
   (:export
    #:+transparent+
    #:+black+

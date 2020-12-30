@@ -1,9 +1,14 @@
 (defpackage #:cl-tiled.impl.xml
   (:use
-   #:alexandria
    #:cl
    #:cl-tiled.data-types
    #:cl-tiled.impl)
+  (:import-from
+   #:alexandria
+   #:if-let
+   #:switch)
+  (:import-from
+   #:xmls)
   (:export
    #:parse-xml-map-file
    #:parse-xml-tileset-file

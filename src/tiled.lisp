@@ -1,11 +1,14 @@
 (defpackage #:cl-tiled
   (:use
-   #:alexandria
    #:cl
    #:cl-tiled.data-types
    #:cl-tiled.impl
    #:cl-tiled.impl.xml
    #:cl-tiled.impl.json)
+  (:import-from
+   #:alexandria
+   #:if-let
+   #:eswitch)
   (:import-from
    #:cl-tiled.data-types
    #:layers
