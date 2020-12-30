@@ -250,21 +250,20 @@
     (setf (slot-value ret 'layers) loaded-layers)
     ret))
 
-
 (defun file-resource-loader (path)
   (alexandria:read-file-into-string path))
 
 
 (defun load-map (path &optional (resource-loader #'file-resource-loader)
-                  &aux
-                  (tmap
-                   (eswitch ((pathname-type path) :test 'string-equal)
-                     ("tmx"
-                      (with-input-from-string (stream (funcall resource-loader path))
-                        (parse-xml-map-stream stream path)))
-                     ("json"
-                      (with-input-from-string (stream (funcall resource-loader path))
-                        (parse-json-map-stream stream path))))))
+                 &aux
+                   (tmap
+                    (eswitch ((pathname-type path) :test 'string-equal)
+                      ("tmx"
+                       (with-input-from-string (stream (funcall resource-loader path))
+                         (parse-xml-map-stream stream path)))
+                      ("json"
+                       (with-input-from-string (stream (funcall resource-loader path))
+                         (parse-json-map-stream stream path))))))
   (%load-map tmap path resource-loader))
 
 (defun load-tileset (path)
@@ -272,16 +271,16 @@
 
 (defun %find-tile (tgid tilesets)
   (loop
-     :for tileset :in tilesets
-     :for tlid := (- tgid (tileset-first-gid tileset))
-     :if (<= 0 tlid (tileset-tile-count tileset))
-       :return
-       (let ((tile (find tlid (tileset-tiles tileset) :key #'tile-id)))
-         (unless tile
-           (setf tile (make-instance 'tiled-tile :id tlid :tileset tileset))
-           (push tile (slot-value tileset 'tiles))
-           (setf (slot-value tileset 'tiles) (sort (slot-value tileset 'tiles) #'< :key #'tile-id)))
-         tile)))
+    :for tileset :in tilesets
+    :for tlid := (- tgid (tileset-first-gid tileset))
+    :if (<= 0 tlid (tileset-tile-count tileset))
+      :return
+      (let ((tile (find tlid (tileset-tiles tileset) :key #'tile-id)))
+        (unless tile
+          (setf tile (make-instance 'tiled-tile :id tlid :tileset tileset))
+          (push tile (slot-value tileset 'tiles))
+          (setf (slot-value tileset 'tiles) (sort (slot-value tileset 'tiles) #'< :key #'tile-id)))
+        tile)))
 
 (defun %load-tile-layer (tlayer map parent
                          &aux (tilesets (map-tilesets map)))
@@ -513,21 +512,21 @@
 
 (defun %load-tileset (ttileset resource-loader)
   (if-let ((source (ttileset-source ttileset)))
-      (%load-external-tileset source (ttileset-first-gid ttileset) resource-loader)
-      (%load-embedded-tileset ttileset)))
+    (%load-external-tileset source (ttileset-first-gid ttileset) resource-loader)
+    (%load-embedded-tileset ttileset)))
 
 (defun %load-external-tileset (path first-gid resource-loader
-                                &aux
-                                (full-path (uiop:ensure-absolute-pathname path *default-pathname-defaults*))
-                                (data (funcall resource-loader full-path))
-                                (ttileset
-                                 (eswitch ((pathname-type full-path) :test 'string-equal)
-                                   ("tsx"
-                                    (with-input-from-string (stream data)
-                                      (parse-xml-tileset-stream stream full-path)))
-                                   ("json"
-                                    (with-input-from-string (stream data)
-                                      (parse-json-tileset-stream stream full-path))))))
+                               &aux
+                                 (full-path (uiop:ensure-absolute-pathname path *default-pathname-defaults*))
+                                 (data (funcall resource-loader full-path))
+                                 (ttileset
+                                  (eswitch ((pathname-type full-path) :test 'string-equal)
+                                    ("tsx"
+                                     (with-input-from-string (stream data)
+                                       (parse-xml-tileset-stream stream full-path)))
+                                    ("json"
+                                     (with-input-from-string (stream data)
+                                       (parse-json-tileset-stream stream full-path))))))
   (let* ((tiles (%load-tiles (ttileset-tiles ttileset)))
          (terrains (%load-terrains (ttileset-terrains ttileset) tiles))
          (ret
@@ -636,35 +635,35 @@
 
 (defun %finalize-tiles (tiles ttiles tileset)
   (loop
-     :for tile :in tiles
-     :for ttile :in ttiles
-     :for terrains := (tileset-terrains tileset)
-     :for terrains-v := (ttileset-tile-terrain ttile)
-     :for tgroup := (ttileset-tile-object-group ttile)
-     :do
+    :for tile :in tiles
+    :for ttile :in ttiles
+    :for terrains := (tileset-terrains tileset)
+    :for terrains-v := (ttileset-tile-terrain ttile)
+    :for tgroup := (ttileset-tile-object-group ttile)
+    :do
        (setf (slot-value tile 'tileset) tileset)
        (setf (slot-value tile 'terrains)
              (make-array 4 :element-type '(or null tiled-terrain)
-                         :initial-contents
-                         (flet ((get-terrain (idx)
-                                  (and idx (elt terrains idx))))
-                           (vector (get-terrain (aref terrains-v 0))
-                                   (get-terrain (aref terrains-v 1))
-                                   (get-terrain (aref terrains-v 2))
-                                   (get-terrain (aref terrains-v 3))))))
-     (when tgroup
-       (setf (slot-value tile 'object-group)
-             (make-instance
-              'object-group
-              :draw-order (or (tobject-group-draw-order tgroup) :top-down)
-              :objects (%load-objects (tobject-group-objects tgroup)))))
+                           :initial-contents
+                           (flet ((get-terrain (idx)
+                                    (and idx (elt terrains idx))))
+                             (vector (get-terrain (aref terrains-v 0))
+                                     (get-terrain (aref terrains-v 1))
+                                     (get-terrain (aref terrains-v 2))
+                                     (get-terrain (aref terrains-v 3))))))
+       (when tgroup
+         (setf (slot-value tile 'object-group)
+               (make-instance
+                'object-group
+                :draw-order (or (tobject-group-draw-order tgroup) :top-down)
+                :objects (%load-objects (tobject-group-objects tgroup)))))
 
-     (when (typep tile 'animated-tile)
-       (setf (slot-value tile 'frames)
-             (mapcar
-              (lambda (tframe)
-                (make-instance
-                 'tiled-frame
-                 :duration (tframe-duration tframe)
-                 :tile (find (tframe-tile-id tframe) tiles :key #'tile-id)))
-              (ttileset-tile-frames ttile))))))
+       (when (typep tile 'animated-tile)
+         (setf (slot-value tile 'frames)
+               (mapcar
+                (lambda (tframe)
+                  (make-instance
+                   'tiled-frame
+                   :duration (tframe-duration tframe)
+                   :tile (find (tframe-tile-id tframe) tiles :key #'tile-id)))
+                (ttileset-tile-frames ttile))))))

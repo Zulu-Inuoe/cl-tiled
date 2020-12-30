@@ -80,10 +80,10 @@
 
 (defun %parse-xml-image-data (image-data)
   (if image-data
-    (let ((encoding (parse-image-encoding-string (xml-attr image-data "encoding")))
-          (compression (parse-compression-string (xml-attr image-data "compression"))))
-      (%parse-image-data encoding compression (xml-text image-data "")))
-    (make-array 0 :element-type '(unsigned-byte 8))))
+      (let ((encoding (parse-image-encoding-string (xml-attr image-data "encoding")))
+            (compression (parse-compression-string (xml-attr image-data "compression"))))
+        (%parse-image-data encoding compression (xml-text image-data "")))
+      (make-array 0 :element-type '(unsigned-byte 8))))
 
 (defun %parse-xml-image (image)
   (when image
@@ -247,9 +247,9 @@
   (assert (zerop (mod (length ub-data-seq) 4))
           (ub-data-seq) "data sequence not divisible by 4")
   (loop
-     :for i := 0 :then (+ i 4)
-     :while (< i (length ub-data-seq))
-     :collect (nibbles:ub32ref/le ub-data-seq i)))
+    :for i := 0 :then (+ i 4)
+    :while (< i (length ub-data-seq))
+    :collect (nibbles:ub32ref/le ub-data-seq i)))
 
 (defun %parse-tiles-data (encoding compression data)
   (switch ((cons encoding compression) :test 'equalp)
@@ -304,18 +304,16 @@
    :properties (%parse-xml-properties (xml-child image-layer "properties"))
    :image (%parse-xml-image (xml-child image-layer "image"))))
 
-(defun %parse-xml-layer-group-layers (layer-group)
+(defun %parse-xml-layers (layers)
   (loop
-     :for ch :in (xmls:node-children layer-group)
-     :for ch-name := (xmls:node-name ch)
-     :if (string= ch-name "layer")
-     :collect (%parse-xml-tile-layer ch)
-     :else :if (string= ch-name "objectgroup")
-     :collect (%parse-xml-object-group ch)
-     :else :if (string= ch-name "imagelayer")
-     :collect (%parse-xml-image-layer ch)
-     :else :if (string= ch-name "group")
-     :collect (%parse-xml-layer-group ch)))
+    :for layer :in layers
+    :for layer-type := (xmls:node-name layer)
+    :for parsed := (switch (layer-type :test #'string=)
+                     ("layer" (%parse-xml-tile-layer layer))
+                     ("objectgroup" (%parse-xml-object-group layer))
+                     ("imagelayer" (%parse-xml-image-layer layer))
+                     ("group" (%parse-xml-layer-group layer)))
+    :if parsed :collect parsed))
 
 (defun %parse-xml-layer-group (layer-group)
   (make-tlayer-group
@@ -329,20 +327,7 @@
    :properties (%parse-xml-properties (xml-child layer-group "properties"))
    :offset-x (xml-attr-int layer-group "offsetx" 0)
    :offset-y (xml-attr-int layer-group "offsety" 0)
-   :layers (%parse-xml-layer-group-layers layer-group)))
-
-(defun %parse-xml-map-layers (map)
-  (loop
-     :for ch :in (xmls:node-children map)
-     :for ch-name := (xmls:node-name ch)
-     :if (string= ch-name "layer")
-     :collect (%parse-xml-tile-layer ch)
-     :else :if (string= ch-name "objectgroup")
-     :collect (%parse-xml-object-group ch)
-     :else :if (string= ch-name "imagelayer")
-     :collect (%parse-xml-image-layer ch)
-     :else :if (string= ch-name "group")
-     :collect (%parse-xml-layer-group ch)))
+   :layers (%parse-xml-layers (xmls:node-children layer-group))))
 
 (defun %parse-xml-map (map)
   (make-tmap
@@ -361,7 +346,7 @@
    :next-object-id (xml-attr-int map "nextobjectid")
    :properties (%parse-xml-properties (xml-child map "properties"))
    :tilesets (mapcar #'%parse-xml-tileset (xml-children map "tileset"))
-   :layers (%parse-xml-map-layers map)))
+   :layers (%parse-xml-layers (xmls:node-children map))))
 
 (defun %slurp-stream (stream)
   (with-output-to-string (str)

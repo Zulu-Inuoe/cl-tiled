@@ -61,13 +61,13 @@
 (defun %parse-json-properties (properties property-types)
   (if (and properties property-types)
       (loop
-         :for (prop-name . prop-value) :in properties
-         :for prop-type := (cdr (assoc prop-name property-types))
-         :collect
-         (make-property
-          (or (and prop-name (symbol-name prop-name)) "")
-          (or prop-type "")
-          (or prop-value "")))
+        :for (prop-name . prop-value) :in properties
+        :for prop-type := (cdr (assoc prop-name property-types))
+        :collect
+        (make-property
+         (or (and prop-name (symbol-name prop-name)) "")
+         (or prop-type "")
+         (or prop-value "")))
       (list)))
 
 (defun %parse-json-image (image)
@@ -237,16 +237,14 @@
 
 (defun %parse-json-layers (layers)
   (loop
-     :for layer :in layers
-     :for layer-type := (json-attr layer :type)
-     :if (string= layer-type "tilelayer")
-     :collect (%parse-json-tile-layer layer)
-     :else :if (string= layer-type "objectgroup")
-     :collect (%parse-json-object-group layer)
-     :else :if (string= layer-type "imagelayer")
-     :collect (%parse-json-image-layer layer)
-     :else :if (string= layer-type "group")
-     :collect (%parse-json-layer-group layer)))
+    :for layer :in layers
+    :for layer-type := (json-attr layer :type)
+    :for parsed := (switch (layer-type :test #'string=)
+                     ("tilelayer" (%parse-json-tile-layer layer))
+                     ("objectgroup" (%parse-json-object-group layer))
+                     ("imagelayer" (%parse-json-image-layer layer))
+                     ("group" (%parse-json-layer-group layer)))
+    :if parsed :collect parsed))
 
 (defun %parse-json-layer-group (layer-group)
   (make-tlayer-group
