@@ -1,6 +1,6 @@
 (defsystem #:cl-tiled
   :name "cl-tiled"
-  :version "0.2.1"
+  :version "0.2.2"
   :description "Tiled (http://www.mapeditor.org/) Loader"
   :author "Wilfredo Velázquez-Rodríguez <zulu.inuoe@gmail.com>"
   :license "zlib/libpng License <http://opensource.org/licenses/zlib-license.php>"
