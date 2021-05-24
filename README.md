@@ -46,35 +46,38 @@ Please post any requests/bugs on the issues page.
 ## Example
 
 ``` common-lisp
-(use-package #:cl-tiled)
+(defpackage #:my-cool-package
+  (:use #:cl)
+  (:local-nicknames
+    (#:tiled #:cl-tiled)))
+(in-package #:my-cool-package)
 
 (defgeneric render-layer (layer))
 
-(defmethod render-layer ((layer tile-layer))
-  (dolist (cell (layer-cells layer))
-    ;; cell-x and cell-y for pixel positions
-    ;; cell-tile for `tile' information
+(defmethod render-layer ((layer tiled:tile-layer))
+  (dolist (cell (tiled:layer-cells layer))
+    ;; tiled:cell-x and tiled:cell-y for pixel positions
+    ;; tiled:cell-tile for `tiled:tile' information
     ;;  what image, which row/column within image
     ))
 
-(defmethod render-layer ((layer image-layer))
-  ;;layer-image gets you the relevant image to render
+(defmethod render-layer ((layer tiled:image-layer))
+  ;;tiled:layer-image gets you the relevant image to render
   )
 
-(defmethod render-layer ((layer object-layer))
-  (dolist (object (object-group-objects layer))
+(defmethod render-layer ((layer tiled:object-layer))
+  (dolist (object (tiled:object-group-objects layer))
     ;; render each object according to type
     ))
 
-(defmethod render-layer ((layer group-layer))
+(defmethod render-layer ((layer tiled:group-layer))
   ;;Render each sub-layer
-  (dolist (layer (group-layers layer))
+  (dolist (layer (tiled:group-layers layer))
     (render-layer layer)))
 
-(let ((tiled-map (load-map "assets/map.tmx")))
-  (dolist (layer (map-layers tiled-map))
+(let ((tiled-map (tiled:load-map "assets/map.tmx")))
+  (dolist (layer (tiled:map-layers tiled-map))
     (render-layer layer)))
-
 ```
 
 ## Contact
