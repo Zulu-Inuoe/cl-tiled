@@ -334,7 +334,7 @@
 
   ;; Sort by y coordinate when :top-down
   (when (eq (object-group-draw-order object-layer) :top-down)
-    (with-slots (objects) object-layer
+    (with-slots ((objects cl-tiled.data-types::objects)) object-layer
       (setf objects (sort objects #'< :key #'object-y))))
   (values))
 
