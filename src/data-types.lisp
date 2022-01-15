@@ -10,6 +10,9 @@
    #:tiled-color-g
    #:tiled-color-b
    #:make-tiled-color
+   
+   #:properties-mixin
+   #:properties
 
    #:property-type
    #:property-name
