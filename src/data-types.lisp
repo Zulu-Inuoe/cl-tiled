@@ -397,7 +397,10 @@
 2 - bottom left
 3 - bottom right
 If nil, indicates no terrain at that corner."
-    :type (simple-array (or null tiled-terrain) 4)
+    ;; For some reason, CCL throws a bad-slot-type error when
+    ;; setting this slot's value if there is a length specified
+    :type #-ccl (simple-array (or null tiled-terrain) 4)
+	  #+ccl (simple-array (or null tiled-terrain) *)
     :initarg :terrains
     :reader tile-terrains)
    (probability
