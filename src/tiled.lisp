@@ -108,6 +108,8 @@
    #:layer-visible
    #:layer-offset-x
    #:layer-offset-y
+   #:layer-repeat-x
+   #:layer-repeat-y
    #:layer-tile-width
    #:layer-tile-height
 
@@ -481,6 +483,8 @@
    :visible (tlayer-visible tlayer)
    :offset-x (tlayer-offset-x tlayer)
    :offset-y (tlayer-offset-y tlayer)
+   :repeat-x (timage-layer-repeat-x tlayer)
+   :repeat-y (timage-layer-repeat-y tlayer)
    :image (timage-layer-image tlayer)
    :properties (tlayer-properties tlayer)))
 
