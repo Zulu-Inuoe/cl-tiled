@@ -232,6 +232,8 @@
    :visible (json-attr-bool image-layer :visible t)
    :offset-x (json-attr-int image-layer :offsetx 0)
    :offset-y (json-attr-int image-layer :offsety 0)
+   :repeat-x (json-attr-bool image-layer :repeatx nil)
+   :repeat-y (json-attr-bool image-layer :repeaty nil)
    :properties (%parse-json-properties (json-child image-layer :properties) (json-child image-layer :propertytypes))
    :image (%parse-json-image (json-attr image-layer :image))))
 

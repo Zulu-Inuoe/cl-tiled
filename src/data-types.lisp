@@ -10,7 +10,7 @@
    #:tiled-color-g
    #:tiled-color-b
    #:make-tiled-color
-   
+
    #:properties-mixin
    #:properties
 
@@ -101,6 +101,8 @@
    #:layer-visible
    #:layer-offset-x
    #:layer-offset-y
+   #:layer-repeat-x
+   #:layer-repeat-y
    #:layer-tile-width
    #:layer-tile-height
 
@@ -894,7 +896,17 @@ These coordinates are relative to the x and y of the object"
     :documentation "The image displayed by this layer."
     :type tiled-image
     :initarg :image
-    :reader layer-image)))
+    :reader layer-image)
+   (repeat-x
+    :documentation "The image repeats horizontally."
+    :type boolean
+    :initarg :repeat-x
+    :reader layer-repeat-x)
+   (repeat-y
+    :documentation "The image repeats vertically."
+    :type boolean
+    :initarg :repeat-y
+    :reader layer-repeat-y)))
 
 (defclass group-layer (layer)
   ((layers

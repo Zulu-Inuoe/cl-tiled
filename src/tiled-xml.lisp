@@ -301,6 +301,8 @@
    :visible (xml-attr-bool image-layer "visible" t)
    :offset-x (xml-attr-int image-layer "offsetx" 0)
    :offset-y (xml-attr-int image-layer "offsety" 0)
+   :repeat-x (xml-attr-bool image-layer "repeatx" nil)
+   :repeat-y (xml-attr-bool image-layer "repeaty" nil)
    :properties (%parse-xml-properties (xml-child image-layer "properties"))
    :image (%parse-xml-image (xml-child image-layer "image"))))
 

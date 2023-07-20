@@ -132,6 +132,8 @@
 
    #:timage-layer
    #:timage-layer-image
+   #:timage-layer-repeat-x
+   #:timage-layer-repeat-y
    #:make-timage-layer
 
    #:tlayer-group
@@ -289,7 +291,9 @@
   (tile-data nil :type ttile-data))
 
 (defstruct (timage-layer (:include tlayer))
-  (image nil :type (or null tiled-image)))
+  (image nil :type (or null tiled-image))
+  (repeat-x nil :type boolean)
+  (repeat-y nil :type boolean))
 
 (defstruct (tlayer-group (:include tlayer))
   (layers () :type list))
