@@ -57,9 +57,12 @@
    (xml-attr property "name" "")
    (xml-attr property "type" "")
    ;;Value might be stored in the 'value' property or in the string content
+   ;;or in the <properties> sub-tag for class properties
    (or (xmls:xmlrep-attrib-value "value" property nil)
        (xmls:xmlrep-string-child property nil)
-       "")))
+       (xml-child property "properties")
+       "")
+   #'%parse-xml-properties))
 
 (defun %parse-xml-properties (properties)
   (if properties
