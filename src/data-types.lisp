@@ -25,6 +25,7 @@
    #:bool-property
    #:color-property
    #:file-property
+   #:class-property
 
    #:tiled-image
    #:image-transparent-color
@@ -221,7 +222,7 @@
   (a #xFF :type (unsigned-byte 8)))
 
 (deftype property-type ()
-  '(member :string :int :float :bool :color :file))
+  '(member :string :int :float :bool :color :file :class))
 
 (defgeneric property-name (property)
   (:documentation "The name of the given property."))
@@ -282,6 +283,12 @@
     :reader property-value
     :initarg :value)))
 
+(defclass class-property (property properties-mixin)
+  ())
+
+(defmethod property-value ((property class-property))
+  (properties property))
+
 (defgeneric property-type (property)
   (:documentation "The `property-type' of the given `property'.")
   (:method ((property string-property))
@@ -293,7 +300,9 @@
   (:method ((property color-property))
     :color)
   (:method ((property file-property))
-    :file))
+    :file)
+  (:method ((property class-property))
+    :class))
 
 (defclass tiled-image ()
   ((transparent-color

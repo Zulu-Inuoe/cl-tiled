@@ -59,6 +59,8 @@
     (t (list))))
 
 (defun %parse-json-properties (properties property-types)
+  ;; TODO : class properties wouldn't be loaded since there is no
+  ;; propertytypes in Tiled >= 1.2
   (if (and properties property-types)
       (loop
         :for (prop-name . prop-value) :in properties
@@ -67,7 +69,8 @@
         (make-property
          (or (and prop-name (symbol-name prop-name)) "")
          (or prop-type "")
-         (or prop-value "")))
+         (or prop-value "")
+         #'%parse-json-properties))
       (list)))
 
 (defun %parse-json-image (image)
