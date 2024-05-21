@@ -381,7 +381,8 @@
         :y y
         :rotation (or rotation 0.0)
         :visible visible
-        :vertices (tpolygon-points polygon)))
+        :vertices (tpolygon-points polygon)
+        :properties properties))
       (polyline
        (make-instance
         'polyline-object
@@ -392,7 +393,8 @@
         :y y
         :rotation (or rotation 0.0)
         :visible visible
-        :points (tpolyline-points polyline)))
+        :points (tpolyline-points polyline)
+        :properties properties))
       (text
        (make-instance
         'text-object
