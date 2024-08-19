@@ -133,6 +133,7 @@
    #:object-y
    #:object-rotation
    #:object-visible
+   #:object-template
 
    #:rect-object
    #:rect-width
@@ -746,7 +747,13 @@ The `tile' here refers to the image to be displayed on this particular frame."))
     :documentation "Whether or not the object is visible."
     :type boolean
     :initarg :visible
-    :reader object-visible)))
+    :reader object-visible)
+   (template
+    :documentation "An object serving as a template of this object."
+    :type (or object null)
+    :initarg :template
+    :initform nil
+    :reader object-template)))
 
 (defclass rect-object (object)
   ((width

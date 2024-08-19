@@ -10,7 +10,8 @@
    #:eswitch)
   (:export
    #:parse-json-map-stream
-   #:parse-json-tileset-stream))
+   #:parse-json-tileset-stream
+   #:parse-json-template-stream))
 
 (in-package #:cl-tiled.impl.json)
 
@@ -134,6 +135,7 @@
    :rotation (json-attr-float object :rotation)
    :gid (json-attr-int object :gid)
    :visible (json-attr-bool object :visible t)
+   :template (json-attr object :template)
    :properties (%parse-json-properties (json-child object :properties) (json-child object :propertytypes))
    :ellipse (json-attr-bool object :ellipse)
    :polygon (%parse-json-polygon (json-children object :polygon))
@@ -284,6 +286,11 @@
    :tilesets (mapcar #'%parse-json-tileset (json-children map :tilesets))
    :layers (%parse-json-layers (json-children map :layers))))
 
+(defun %parse-json-template (template)
+  (make-ttemplate
+   :tileset (json-attr (json-child template :tileset) :source)
+   :object (%parse-json-object (json-child template :object))))
+
 (defun bool-handler (str)
   (eswitch (str :test 'string=)
     ("false" :false)
@@ -305,3 +312,6 @@
 
 (defun parse-json-tileset-stream (stream current-directory)
   (for-json-tree-from-stream stream current-directory #'%parse-json-tileset))
+
+(defun parse-json-template-stream (stream current-directory)
+  (for-json-tree-from-stream stream current-directory #'%parse-json-template))
