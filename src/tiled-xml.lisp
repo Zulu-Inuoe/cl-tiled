@@ -14,7 +14,8 @@
    #:xmls)
   (:export
    #:parse-xml-map-stream
-   #:parse-xml-tileset-stream))
+   #:parse-xml-tileset-stream
+   #:parse-xml-template-stream))
 
 (in-package #:cl-tiled.impl.xml)
 
@@ -179,6 +180,7 @@
    :rotation (xml-attr-float object "rotation")
    :gid (xml-attr-int object "gid")
    :visible (xml-attr-bool object "visible" t)
+   :template (xml-attr object "template")
    :properties (%parse-xml-properties (xml-child object "properties"))
    :ellipse (and (xml-child object "ellipse") t)
    :polygon (%parse-xml-polygon (xml-child object "polygon"))
@@ -353,6 +355,11 @@
    :tilesets (mapcar #'%parse-xml-tileset (xml-children map "tileset"))
    :layers (%parse-xml-layers (xmls:node-children map))))
 
+(defun %parse-xml-template (template)
+  (make-ttemplate
+   :tileset (xml-attr (xml-child template "tileset") "source")
+   :object (%parse-xml-object (xml-child template "object"))))
+
 (defun %slurp-stream (stream)
   (with-output-to-string (str)
     (loop
@@ -374,3 +381,8 @@
   (let ((tree (xmls:parse (%slurp-stream stream))))
     (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
       (%parse-xml-tileset tree))))
+
+(defun parse-xml-template-stream (stream current-directory)
+  (let ((tree (xmls:parse (%slurp-stream stream))))
+    (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
+      (%parse-xml-template tree))))

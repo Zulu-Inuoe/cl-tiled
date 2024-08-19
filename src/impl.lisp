@@ -59,6 +59,7 @@
    #:tobject-gid
    #:tobject-tobject-gid
    #:tobject-visible
+   #:tobject-template
    #:tobject-properties
    #:tobject-ellipse
    #:tobject-polygon
@@ -117,6 +118,11 @@
    #:ttileset-terrains
    #:ttileset-tiles
    #:make-ttileset
+
+   #:ttemplate
+   #:ttemplate-tileset
+   #:ttemplate-object
+   #:make-ttemplate
 
    #:ttile-encoding
 
@@ -224,6 +230,7 @@
   (rotation nil :type (or null real))
   (gid nil :type (or null integer))
   (visible t :type boolean)
+  (template nil :type (or null string))
   (properties () :type list)
   (ellipse nil :type boolean)
   (polygon nil :type (or null tpolygon))
@@ -278,6 +285,10 @@
   (image nil :type (or null tiled-image))
   (terrains () :type list)
   (tiles () :type list))
+
+(defstruct ttemplate
+  (tileset nil :type (or null string))
+  (object nil :type tobject))
 
 (deftype ttile-encoding ()
   '(member nil :csv :base64))

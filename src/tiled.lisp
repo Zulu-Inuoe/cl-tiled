@@ -9,7 +9,9 @@
    #:alexandria
    #:if-let
    #:eswitch
-   #:read-file-into-string)
+   #:read-file-into-string
+   #:length=
+   #:copy-hash-table)
   (:import-from
    #:cl-tiled.data-types
    #:layers
@@ -23,6 +25,7 @@
   (:export
    #:load-map
    #:load-tileset
+   #:load-template
 
    #:tiled-color
    #:tiled-color-r
@@ -340,16 +343,47 @@
       (setf objects (sort objects #'< :key #'object-y))))
   (values))
 
+(defun %load-template (path resource-loader
+                       &aux
+                         (full-path (uiop:ensure-absolute-pathname path *default-pathname-defaults*))
+                         (data (funcall resource-loader full-path))
+                         (ttemplate
+                          (eswitch ((pathname-type full-path) :test 'string-equal)
+                            ("tx"
+                             (with-input-from-string (stream data)
+                               (parse-xml-template-stream stream full-path)))
+                            ("tj"
+                             (with-input-from-string (stream data)
+                               (parse-json-template-stream stream full-path))))))
+  (let* ((ttileset (ttemplate-tileset ttemplate))
+         (tobject (ttemplate-object ttemplate))
+         (tileset (when ttileset
+                    (%load-external-tileset ttileset 1 resource-loader)))
+         (object (%load-object tobject)))
+    (when tileset
+      (%finalize-object object tobject (list tileset)))
+    object))
+
+;; NOTE: to prevent re-reading template and tileset files for every instance
+(defvar *templates-cache* (make-hash-table :test 'equal))
+
+(defun load-template (path)
+  (if-let ((template (gethash path *templates-cache*)))
+    template
+    (setf (gethash path *templates-cache*)
+          (%load-template path #'read-file-into-string))))
+
 (defun %load-object (tobject)
   (let ((id (tobject-id tobject))
         (name (tobject-name tobject))
         (type (tobject-type tobject))
         (x (tobject-x tobject))
         (y (tobject-y tobject))
-        (width (or (tobject-width tobject) 0))
-        (height (or (tobject-height tobject) 0))
+        (width (tobject-width tobject))
+        (height (tobject-height tobject))
         (rotation (tobject-rotation tobject))
         (visible (tobject-visible tobject))
+        (template (tobject-template tobject))
         (properties (tobject-properties tobject))
         (ellipse (tobject-ellipse tobject))
         (polygon (tobject-polygon tobject))
@@ -358,6 +392,86 @@
         (gid (tobject-gid tobject))
         (image (tobject-image tobject)))
     (cond
+      (template
+       (let* ((template-object (load-template template))
+              (object-initargs
+                `(:id ,id :x ,x :y ,y :template ,template-object
+                  :properties ,properties
+                  :name ,(if (length= 0 name) (object-name template-object) name)
+                  :type ,(if (length= 0 type) (object-type template-object) type)
+                  :rotation ,(or rotation (object-rotation template-object) 0.0)
+                  :visible ,(or visible (object-visible template-object))))
+              (object
+                (etypecase template-object
+                  (ellipse-object
+                   (apply
+                    #'make-instance
+                    'ellipse-object
+                    :rx (if width (/ width 2) (ellipse-rx template-object))
+                    :ry (if height (/ height 2) (ellipse-ry template-object))
+                    object-initargs))
+                  (polygon-object
+                   (apply
+                    #'make-instance
+                    'polygon-object
+                    :vertices (if polygon
+                                  (tpolygon-points polygon)
+                                  (polygon-vertices template-object))
+                    object-initargs))
+                  (polyline-object
+                   (apply
+                    #'make-instance
+                    'polyline-object
+                    :points (if polyline
+                                (tpolyline-points polyline)
+                                (polyline-points template-object))
+                    object-initargs))
+                  (text-object
+                   (apply
+                    #'make-instance
+                    'text-object
+                    :string (if text (ttext-text text) (text-string template-object))
+                    :font-family (or (when text (ttext-font-family text)) (text-font-family template-object) "sans-serif")
+                    :pixel-size (or (when text (ttext-pixel-size text)) (text-pixel-size template-object) 16)
+                    :wrap (if text (ttext-wrap text) (text-wrap template-object))
+                    :color (or (when text (ttext-color text)) (text-color template-object) +black+)
+                    :bold (if text (ttext-bold text) (text-bold template-object))
+                    :italic (if text (ttext-italic text) (text-italic template-object))
+                    :underline (if text (ttext-underline text) (text-underline template-object))
+                    :strikeout (if text (ttext-strikeout text) (text-strikeout template-object))
+                    :kerning (if text (ttext-kerning text) (text-kerning template-object))
+                    :halign (or (when text (ttext-halign text)) (text-halign template-object) :left)
+                    :valign (or (when text (ttext-valign text)) (text-valign template-object) :top)
+                    object-initargs))
+                  (tile-object
+                   (apply
+                    #'make-instance
+                    'tile-object
+                    :tile (if gid nil (object-tile template-object))
+                    :width (or width (object-width template-object)  0)
+                    :height (or height (object-height template-object) 0)
+                    :flipped-anti-diagonal (if gid (logbitp 29 gid) (object-flipped-anti-diagonal template-object))
+                    :flipped-vertical (if gid (logbitp 30 gid) (object-flipped-vertical template-object))
+                    :flipped-horizontal (if gid (logbitp 31 gid) (object-flipped-horizontal template-object))
+                    object-initargs))
+                  (image-object
+                   (apply
+                    #'make-instance
+                    'image-object
+                    :image (or image (object-image template-object))
+                    object-initargs))
+                  (rect-object
+                   (apply
+                    #'make-instance
+                    'rect-object
+                    :width (or width (rect-width template-object) 0)
+                    :height (or height (rect-height template-object) 0)
+                    object-initargs)))))
+         (let ((properties (copy-hash-table (properties template-object))))
+           (maphash #'(lambda (k v) (setf (gethash k properties) v))
+                    (properties object))
+           (setf (slot-value object 'properties) properties))
+         object))
       (ellipse
        (make-instance
         'ellipse-object
@@ -368,8 +482,8 @@
         :y y
         :rotation (or rotation 0.0)
         :visible visible
-        :rx (/ width 2)
-        :ry (/ height 2)
+        :rx (/ (or width 0) 2)
+        :ry (/ (or height 0) 2)
         :properties properties))
       (polygon
        (make-instance
@@ -426,14 +540,15 @@
         :type type
         :x x
         :y y
-        :width width
-        :height height
+        :width (or width 0)
+        :height (or height 0)
         :rotation (or rotation 0.0)
         :properties properties
         :visible visible
         :flipped-anti-diagonal (logbitp 29 gid)
         :flipped-vertical (logbitp 30 gid)
-        :flipped-horizontal (logbitp 31 gid)))
+        :flipped-horizontal (logbitp 31 gid)
+        :tile nil))
       (image
        (make-instance
         'image-object
@@ -456,15 +571,17 @@
         :y y
         :rotation (or rotation 0.0)
         :visible visible
-        :width width
-        :height height
+        :width (or width 0)
+        :height (or height 0)
         :properties properties)))))
 
 (defun %finalize-object (object tobject tilesets)
   (when (typep object 'tile-object)
-    (setf (slot-value object 'tile)
-          (or (%find-tile (mask-field (byte 29 0) (tobject-gid tobject)) tilesets)
-              (break)))))
+    (with-slots (tile) object
+      (unless tile
+        (setf tile
+              (or (%find-tile (mask-field (byte 29 0) (tobject-gid tobject)) tilesets)
+                  (break)))))))
 
 (defun %load-objects (tobjects)
   (mapcar #'%load-object tobjects))
