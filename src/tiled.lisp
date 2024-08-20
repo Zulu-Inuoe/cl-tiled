@@ -224,8 +224,12 @@
 
 (in-package #:cl-tiled)
 
+;; NOTE: to prevent re-reading template and tileset files for every object instance
+(defvar *templates-cache*)
+
 (defun %load-map (tmap path resource-loader)
-  (let* ((loaded-tilesets
+  (let* ((*templates-cache* (make-hash-table :test 'equal))
+         (loaded-tilesets
            (uiop:with-pathname-defaults ((uiop:pathname-directory-pathname path))
              (flet ((%%load-tileset (tileset)
                       (%load-tileset tileset resource-loader)))
@@ -364,9 +368,6 @@
       (%finalize-object object tobject (list tileset)))
     object))
 
-;; NOTE: to prevent re-reading template and tileset files for every instance
-(defvar *templates-cache* (make-hash-table :test 'equal))
-
 (defun load-template (path)
   (if-let ((template (gethash path *templates-cache*)))
     template
@@ -468,7 +469,7 @@
                     :height (or height (rect-height template-object) 0)
                     object-initargs)))))
          (let ((properties (copy-hash-table (properties template-object))))
-           (maphash #'(lambda (k v) (setf (gethash k properties) v))
+           (maphash (lambda (k v) (setf (gethash k properties) v))
                     (properties object))
            (setf (slot-value object 'properties) properties))
          object))
