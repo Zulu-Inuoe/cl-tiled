@@ -368,11 +368,14 @@
       (%finalize-object object tobject (list tileset)))
     object))
 
-(defun load-template (path)
+(defun %load-cached-template (path)
   (if-let ((template (gethash path *templates-cache*)))
     template
     (setf (gethash path *templates-cache*)
           (%load-template path #'read-file-into-string))))
+
+(defun load-template (path)
+  (%load-template path #'read-file-into-string))
 
 (defun %load-object (tobject)
   (let ((id (tobject-id tobject))
@@ -394,7 +397,7 @@
         (image (tobject-image tobject)))
     (cond
       (template
-       (let* ((template-object (load-template template))
+       (let* ((template-object (%load-cached-template template))
               (object-initargs
                 `(:id ,id :x ,x :y ,y :template ,template-object
                   :properties ,properties
