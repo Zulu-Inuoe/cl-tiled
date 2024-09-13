@@ -66,7 +66,7 @@
    #'%parse-xml-properties))
 
 (defun %parse-xml-properties (properties)
-  (if properties
+  (if (and properties (not (equal properties "")))
       (mapcar #'%parse-xml-property
               (xml-children properties "property"))
       (list)))
