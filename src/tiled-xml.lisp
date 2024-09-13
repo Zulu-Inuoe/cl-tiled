@@ -61,8 +61,7 @@
    ;;or in the <properties> sub-tag for class properties
    (or (xmls:xmlrep-attrib-value "value" property nil)
        (xmls:xmlrep-string-child property nil)
-       (xml-child property "properties")
-       "")
+       (xml-child property "properties"))
    #'%parse-xml-properties))
 
 (defun %parse-xml-properties (properties)
