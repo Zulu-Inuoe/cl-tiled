@@ -259,19 +259,16 @@
     (setf (slot-value ret 'layers) loaded-layers)
     ret))
 
-
-(defun load-map (path &optional (resource-loader #'read-file-into-string)
-                 &aux (string (funcall resource-loader path)))
-  (uiop:with-pathname-defaults ((uiop:pathname-directory-pathname path))
-    (%load-map
-     (eswitch ((pathname-type path) :test 'string-equal)
-       ("tmx"
-        (with-input-from-string (stream string)
-          (parse-xml-map-stream stream)))
-       ("json"
-        (with-input-from-string (stream string)
-          (parse-json-map-stream stream))))
-     resource-loader)))
+(defun load-map (path &optional (resource-loader #'read-file-into-string))
+  (eswitch ((pathname-type path) :test 'string-equal)
+    ("tmx"
+     (with-input-from-string (stream (funcall resource-loader path))
+       (uiop:with-pathname-defaults ((uiop:pathname-directory-pathname path))
+         (%load-map (parse-xml-map-stream stream) resource-loader))))
+    ("json"
+     (with-input-from-string (stream (funcall resource-loader path))
+       (uiop:with-pathname-defaults ((uiop:pathname-directory-pathname path))
+         (%load-map (parse-json-map-stream stream) resource-loader))))))
 
 (defun load-tileset (path &optional (resource-loader #'read-file-into-string))
   (%load-external-tileset path 0 resource-loader))
@@ -348,18 +345,16 @@
       (setf objects (sort objects #'< :key #'object-y))))
   (values))
 
-(defun %load-template (path resource-loader
-                       &aux
-                         (data (funcall resource-loader path))
-                         (ttemplate
-                          (eswitch ((pathname-type path) :test 'string-equal)
-                            ("tx"
-                             (with-input-from-string (stream data)
-                               (parse-xml-template-stream stream)))
-                            ("tj"
-                             (with-input-from-string (stream data)
-                               (parse-json-template-stream stream))))))
-  (let* ((ttileset (ttemplate-tileset ttemplate))
+(defun %load-template (path resource-loader)
+  (let* ((ttemplate
+           (eswitch ((pathname-type path) :test 'string-equal)
+             ("tx"
+              (with-input-from-string (stream (funcall resource-loader path))
+                (parse-xml-template-stream stream)))
+             ("tj"
+              (with-input-from-string (stream (funcall resource-loader path))
+                (parse-json-template-stream stream)))))
+         (ttileset (ttemplate-tileset ttemplate))
          (tobject (ttemplate-object ttemplate))
          (tileset (when ttileset
                     (%load-external-tileset ttileset 1 resource-loader)))
@@ -588,7 +583,7 @@
                   (break)))))))
 
 (defun %load-objects (tobjects resource-loader)
-  (mapcar #'(lambda (object) (%load-object object resource-loader)) tobjects))
+  (mapcar (lambda (object) (%load-object object resource-loader)) tobjects))
 
 (defun %finalize-objects (objects tobjects tilesets)
   (mapc
