@@ -6,7 +6,8 @@
   (:import-from
    #:alexandria
    #:if-let
-   #:switch)
+   #:switch
+   #:when-let)
   (:import-from
    #:split-sequence
    #:split-sequence)
@@ -97,7 +98,7 @@
       (cond
         (source
          (make-instance 'external-tiled-image
-                        :source (uiop:ensure-absolute-pathname source *default-pathname-defaults*)
+                        :source (uiop:merge-pathnames* source)
                         :transparent-color transparent-color
                         :width width :height height))
         (t
@@ -356,7 +357,8 @@
 
 (defun %parse-xml-template (template)
   (make-ttemplate
-   :tileset (xml-attr (xml-child template "tileset") "source")
+   :tileset (when-let (tileset (xml-child template "tileset"))
+              (xml-attr tileset "source"))
    :object (%parse-xml-object (xml-child template "object"))))
 
 (defun %slurp-stream (stream)
@@ -367,21 +369,20 @@
       :doing
          (write-line (string-right-trim '(#\return) line) str))))
 
-(defun %slurp-file (path)
-  (with-open-file (stream path)
-    (%slurp-stream stream)))
+(defun for-xml-tree-from-stream (stream current-directory processor)
+  (let* ((tree (xmls:parse (%slurp-stream stream)))
+         (thunk (lambda () (funcall processor tree))))
+    (if current-directory
+        (uiop:call-with-current-directory
+         (uiop:pathname-directory-pathname current-directory)
+         thunk)
+        (funcall thunk))))
 
-(defun parse-xml-map-stream (stream current-directory)
-  (let ((tree (xmls:parse (%slurp-stream stream))))
-    (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
-      (%parse-xml-map tree))))
+(defun parse-xml-map-stream (stream &optional current-directory)
+  (for-xml-tree-from-stream stream current-directory #'%parse-xml-map))
 
-(defun parse-xml-tileset-stream (stream current-directory)
-  (let ((tree (xmls:parse (%slurp-stream stream))))
-    (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
-      (%parse-xml-tileset tree))))
+(defun parse-xml-tileset-stream (stream &optional current-directory)
+  (for-xml-tree-from-stream stream current-directory #'%parse-xml-tileset))
 
-(defun parse-xml-template-stream (stream current-directory)
-  (let ((tree (xmls:parse (%slurp-stream stream))))
-    (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
-      (%parse-xml-template tree))))
+(defun parse-xml-template-stream (stream &optional current-directory)
+  (for-xml-tree-from-stream stream current-directory #'%parse-xml-template))
