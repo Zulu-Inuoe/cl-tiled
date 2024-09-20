@@ -377,7 +377,7 @@
      ;; quite difficult.
      ;; This is generally The Right Thing
      (make-instance 'file-property :name name :string value
-                                   :value (uiop:merge-pathnames* value *default-pathname-defaults*)))
+                                   :value (uiop:merge-pathnames* value)))
     ("class"
      (make-instance 'class-property :name name :string ""
                                     :properties (funcall parse-properties value)))))

@@ -77,7 +77,7 @@
 (defun %parse-json-image (image)
   (when image
     (make-instance 'external-tiled-image
-                   :source (uiop:ensure-absolute-pathname image *default-pathname-defaults*)
+                   :source (uiop:merge-pathnames* image)
                    :transparent-color +transparent+
                    :width 0 :height 0)))
 
@@ -300,18 +300,22 @@
   str)
 
 (defun for-json-tree-from-stream (stream current-directory processor)
-  (let ((tree (let ((cl-json:*json-identifier-name-to-lisp* #'ident-handler)
-                    (cl-json:*boolean-handler* #'bool-handler)
-                    (cl-json:*json-array-type* 'cl:vector))
-                (cl-json:decode-json stream))))
-    (uiop:with-current-directory ((uiop:pathname-directory-pathname current-directory))
-      (funcall processor tree))))
+  (let* ((tree (let ((cl-json:*json-identifier-name-to-lisp* #'ident-handler)
+                     (cl-json:*boolean-handler* #'bool-handler)
+                     (cl-json:*json-array-type* 'cl:vector))
+                 (cl-json:decode-json stream)))
+         (thunk (lambda () (funcall processor tree))))
+    (if current-directory
+        (uiop:call-with-current-directory
+         (uiop:pathname-directory-pathname current-directory)
+         thunk)
+        (funcall thunk))))
 
-(defun parse-json-map-stream (stream current-directory)
+(defun parse-json-map-stream (stream &optional current-directory)
   (for-json-tree-from-stream stream current-directory #'%parse-json-map))
 
-(defun parse-json-tileset-stream (stream current-directory)
+(defun parse-json-tileset-stream (stream &optional current-directory)
   (for-json-tree-from-stream stream current-directory #'%parse-json-tileset))
 
-(defun parse-json-template-stream (stream current-directory)
+(defun parse-json-template-stream (stream &optional current-directory)
   (for-json-tree-from-stream stream current-directory #'%parse-json-template))

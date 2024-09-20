@@ -227,13 +227,12 @@
 ;; NOTE: to prevent re-reading template and tileset files for every object instance
 (defvar *templates-cache*)
 
-(defun %load-map (tmap path resource-loader)
+(defun %load-map (tmap resource-loader)
   (let* ((*templates-cache* (make-hash-table :test 'equal))
          (loaded-tilesets
-           (uiop:with-pathname-defaults ((uiop:pathname-directory-pathname path))
-             (flet ((%%load-tileset (tileset)
-                      (%load-tileset tileset resource-loader)))
-               (mapcar #'%%load-tileset (tmap-tilesets tmap)))))
+           (flet ((%%load-tileset (tileset)
+                    (%load-tileset tileset resource-loader)))
+             (mapcar #'%%load-tileset (tmap-tilesets tmap))))
          (ret
            (make-instance
             'tiled-map
@@ -253,27 +252,29 @@
             (lambda (l)
               (etypecase l
                 (ttile-layer (%load-tile-layer l ret nil))
-                (tobject-group (%load-object-layer l ret nil))
+                (tobject-group (%load-object-layer l ret nil resource-loader))
                 (timage-layer (%load-image-layer l ret nil))
-                (tlayer-group (%load-layer-group l ret nil))))
+                (tlayer-group (%load-layer-group l ret nil resource-loader))))
             (tmap-layers tmap))))
     (setf (slot-value ret 'layers) loaded-layers)
     ret))
 
-(defun load-map (path &optional (resource-loader #'read-file-into-string)
-                 &aux
-                   (tmap
-                    (eswitch ((pathname-type path) :test 'string-equal)
-                      ("tmx"
-                       (with-input-from-string (stream (funcall resource-loader path))
-                         (parse-xml-map-stream stream path)))
-                      ("json"
-                       (with-input-from-string (stream (funcall resource-loader path))
-                         (parse-json-map-stream stream path))))))
-  (%load-map tmap path resource-loader))
 
-(defun load-tileset (path)
-  (%load-external-tileset path 0 #'read-file-into-string))
+(defun load-map (path &optional (resource-loader #'read-file-into-string)
+                 &aux (string (funcall resource-loader path)))
+  (uiop:with-pathname-defaults ((uiop:pathname-directory-pathname path))
+    (%load-map
+     (eswitch ((pathname-type path) :test 'string-equal)
+       ("tmx"
+        (with-input-from-string (stream string)
+          (parse-xml-map-stream stream)))
+       ("json"
+        (with-input-from-string (stream string)
+          (parse-json-map-stream stream))))
+     resource-loader)))
+
+(defun load-tileset (path &optional (resource-loader #'read-file-into-string))
+  (%load-external-tileset path 0 resource-loader))
 
 (defun %find-tile (tgid tilesets)
   (loop
@@ -320,7 +321,7 @@
                  :layer ret))))
     ret))
 
-(defun %load-object-layer (tgroup map parent
+(defun %load-object-layer (tgroup map parent resource-loader
                            &aux (tilesets (map-tilesets map)))
   (let ((ret
           (make-instance
@@ -333,7 +334,7 @@
            :offset-x (tlayer-offset-x tgroup)
            :offset-y (tlayer-offset-y tgroup)
            :draw-order (or (tobject-group-draw-order tgroup) :top-down)
-           :objects (%load-objects (tobject-group-objects tgroup))
+           :objects (%load-objects (tobject-group-objects tgroup) resource-loader)
            :properties (tlayer-properties tgroup))))
     (%finalize-object-layer ret (tobject-group-objects tgroup) tilesets)
     ret))
@@ -349,35 +350,34 @@
 
 (defun %load-template (path resource-loader
                        &aux
-                         (full-path (uiop:ensure-absolute-pathname path *default-pathname-defaults*))
-                         (data (funcall resource-loader full-path))
+                         (data (funcall resource-loader path))
                          (ttemplate
-                          (eswitch ((pathname-type full-path) :test 'string-equal)
+                          (eswitch ((pathname-type path) :test 'string-equal)
                             ("tx"
                              (with-input-from-string (stream data)
-                               (parse-xml-template-stream stream full-path)))
+                               (parse-xml-template-stream stream)))
                             ("tj"
                              (with-input-from-string (stream data)
-                               (parse-json-template-stream stream full-path))))))
+                               (parse-json-template-stream stream))))))
   (let* ((ttileset (ttemplate-tileset ttemplate))
          (tobject (ttemplate-object ttemplate))
          (tileset (when ttileset
                     (%load-external-tileset ttileset 1 resource-loader)))
-         (object (%load-object tobject)))
+         (object (%load-object tobject resource-loader)))
     (when tileset
       (%finalize-object object tobject (list tileset)))
     object))
 
-(defun %load-cached-template (path)
+(defun %load-cached-template (path resource-loader)
   (if-let ((template (gethash path *templates-cache*)))
     template
     (setf (gethash path *templates-cache*)
-          (%load-template path #'read-file-into-string))))
+          (%load-template path resource-loader))))
 
-(defun load-template (path)
-  (%load-template path #'read-file-into-string))
+(defun load-template (path &optional (resource-loader #'read-file-into-string))
+  (%load-template path resource-loader))
 
-(defun %load-object (tobject)
+(defun %load-object (tobject resource-loader)
   (let ((id (tobject-id tobject))
         (name (tobject-name tobject))
         (type (tobject-type tobject))
@@ -397,7 +397,7 @@
         (image (tobject-image tobject)))
     (cond
       (template
-       (let* ((template-object (%load-cached-template template))
+       (let* ((template-object (%load-cached-template template resource-loader))
               (object-initargs
                 `(:id ,id :x ,x :y ,y :template ,template-object
                   :properties ,properties
@@ -587,8 +587,8 @@
               (or (%find-tile (mask-field (byte 29 0) (tobject-gid tobject)) tilesets)
                   (break)))))))
 
-(defun %load-objects (tobjects)
-  (mapcar #'%load-object tobjects))
+(defun %load-objects (tobjects resource-loader)
+  (mapcar #'(lambda (object) (%load-object object resource-loader)) tobjects))
 
 (defun %finalize-objects (objects tobjects tilesets)
   (mapc
@@ -611,7 +611,7 @@
    :image (timage-layer-image tlayer)
    :properties (tlayer-properties tlayer)))
 
-(defun %load-layer-group (tlayer map parent)
+(defun %load-layer-group (tlayer map parent resource-loader)
   (let ((ret
           (make-instance
            'group-layer
@@ -628,35 +628,37 @@
            (lambda (l)
              (etypecase l
                (ttile-layer (%load-tile-layer l map ret))
-               (tobject-group (%load-object-layer l map ret))
+               (tobject-group (%load-object-layer l map ret resource-loader))
                (timage-layer (%load-image-layer l map ret))
-               (tlayer-group (%load-layer-group l map ret))))
+               (tlayer-group (%load-layer-group l map ret resource-loader))))
            (tlayer-group-layers tlayer)))
     ret))
 
 (defun %load-tileset (ttileset resource-loader)
   (if-let ((source (ttileset-source ttileset)))
     (%load-external-tileset source (ttileset-first-gid ttileset) resource-loader)
-    (%load-embedded-tileset ttileset)))
+    (%load-embedded-tileset ttileset resource-loader)))
 
 (defun %load-external-tileset (path first-gid resource-loader
                                &aux
-                                 (full-path (uiop:ensure-absolute-pathname path *default-pathname-defaults*))
-                                 (data (funcall resource-loader full-path))
+                                 (data (funcall resource-loader path))
                                  (ttileset
-                                  (eswitch ((pathname-type full-path) :test 'string-equal)
+                                  (eswitch ((pathname-type path) :test 'string-equal)
                                     ("tsx"
                                      (with-input-from-string (stream data)
-                                       (parse-xml-tileset-stream stream full-path)))
+                                       (parse-xml-tileset-stream stream)))
+                                    ("tsj"
+                                     (with-input-from-string (stream data)
+                                       (parse-json-tileset-stream stream path)))
                                     ("json"
                                      (with-input-from-string (stream data)
-                                       (parse-json-tileset-stream stream full-path))))))
+                                       (parse-json-tileset-stream stream path))))))
   (let* ((tiles (%load-tiles (ttileset-tiles ttileset)))
          (terrains (%load-terrains (ttileset-terrains ttileset) tiles))
          (ret
            (make-instance
             'external-tileset
-            :source full-path
+            :source (uiop:merge-pathnames* path)
             :name (ttileset-name ttileset)
             :first-gid first-gid
             :tile-width (ttileset-tile-width ttileset)
@@ -669,11 +671,11 @@
             :offset-y (ttileset-tile-offset-y ttileset)
             :image (ttileset-image ttileset)
             :terrains terrains)))
-    (%finalize-tiles tiles (ttileset-tiles ttileset) ret)
+    (%finalize-tiles tiles (ttileset-tiles ttileset) ret resource-loader)
     (setf (slot-value ret 'tiles) tiles)
     ret))
 
-(defun %load-embedded-tileset (ttileset)
+(defun %load-embedded-tileset (ttileset resource-loader)
   (let* ((tiles (%load-tiles (ttileset-tiles ttileset)))
          (terrains (%load-terrains (ttileset-terrains ttileset) tiles))
          (tileset
@@ -692,7 +694,7 @@
             :image (ttileset-image ttileset)
             :tiles tiles
             :terrains terrains)))
-    (%finalize-tiles tiles (ttileset-tiles ttileset) tileset)
+    (%finalize-tiles tiles (ttileset-tiles ttileset) tileset resource-loader)
     tileset))
 
 (defun %load-tiles (ttiles)
@@ -757,7 +759,7 @@
       :properties (tterrain-properties tterrain)))
    tterrains))
 
-(defun %finalize-tiles (tiles ttiles tileset)
+(defun %finalize-tiles (tiles ttiles tileset resource-loader)
   (loop
     :for tile :in tiles
     :for ttile :in ttiles
@@ -780,7 +782,7 @@
                (make-instance
                 'object-group
                 :draw-order (or (tobject-group-draw-order tgroup) :top-down)
-                :objects (%load-objects (tobject-group-objects tgroup)))))
+                :objects (%load-objects (tobject-group-objects tgroup) resource-loader))))
 
        (when (typep tile 'animated-tile)
          (setf (slot-value tile 'frames)
