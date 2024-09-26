@@ -55,6 +55,7 @@
    #:tiled-tile
    #:tile-tileset
    #:tile-id
+   #:tile-gid
    #:tile-column
    #:tile-row
    #:tile-pixel-x

@@ -46,6 +46,7 @@
    #:tiled-tile
    #:tile-tileset
    #:tile-id
+   #:tile-gid
    #:tile-column
    #:tile-row
    #:tile-pixel-x
@@ -391,6 +392,12 @@
     :reader tile-id))
   (:documentation
    "A simple tile belonging to a tileset, with no individual properties."))
+
+
+(defun tile-gid (tile)
+  "Get global tile ID, unique within the map."
+  (+ (tile-id tile)
+     (tileset-first-gid (tile-tileset tile))))
 
 (defgeneric tile-image (tile)
   (:method ((tile tiled-tile))
