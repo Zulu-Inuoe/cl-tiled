@@ -805,7 +805,7 @@ These coordinates are relative to the x and y of the object"
 (defclass tile-object (object)
   ((tile
     :documentation "The tile used by this object."
-    :type tiled-tile
+    :type (or null tiled-tile)
     :initarg :tile
     :reader object-tile)
    (width
